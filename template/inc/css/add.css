@@ -1,0 +1,93 @@
+.links-top-container{
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    padding-top: 30px;
+}
+.links-top-container *{
+    margin-bottom: 30px;
+    margin-right: 12px;
+    border: 2px solid #000000;
+    transition: .3s;
+    background: #fff;
+    color: #000;
+    font-weight: bold;
+    display: block;
+    user-selection: none;
+    outline: none;
+    text-decoration: none;
+    height: 43px;
+    line-height: 40px;
+    text-align: center;
+    padding: 0 20px;
+}
+.links-top-container *.current{
+    background: #CF3932;
+    border-color: #CF3932;
+    color: #fff;
+}
+.product-attributes-line{
+    margin: 30px 0 40px;
+    width: calc(100% - 25px);
+    border-top: 1px solid #E0E0E0;
+}
+.product-attributes-box p{
+    font-weight: 400;
+    color: #000;
+}
+.product-buy-block-article{
+    color: #000;
+    margin-bottom: 20px;
+}
+.product-title-labels > .product-title-label:first-child{
+	margin-right: 15px;
+}
+.product-title-labels > .product-title-label{
+	margin-top: 15px;
+}
+
+@media screen and (max-width: 1200px){
+    .product-attributes-line{        
+        width: calc(100% + 6px);       
+    }
+    .product-attributes-row .col-lg-6:first-child:after{
+        right: 9px;
+    }
+    .product-features-list-detailed .feature-value{
+        width: 35%;
+    }
+    .product-features-list-detailed .feature-name{
+        width: 65%;
+    }
+}
+
+@media screen and (max-width: 992px){
+    .product-attributes-line{        
+        width: 100%;       
+    }
+    .product-attributes-row .col-lg-6:first-child:after{
+        display: none;
+    }
+    .product-features-list-detailed .feature-value{
+        width: 25%;
+        overflow: hidden;
+        text-overflow: ellipsis;
+    }
+    .product-features-list-detailed .feature-name{
+        width: 75%;
+    }
+}
+
+@media screen and (max-width: 565px){
+    .product-features-list-detailed .feature-value{
+        width: 100%;
+        padding: 0;
+    }
+    .product-features-list-detailed .feature-name{
+        width: 100%;
+        padding-right: 10px;
+    }
+    .product-features-list-detailed .feature {
+        display: block;
+    }
+}
