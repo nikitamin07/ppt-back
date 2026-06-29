@@ -1,6 +1,5 @@
 composer.phar
 robots.txt
-.htaccess
 /vendor/
 /tmp
 /plugins

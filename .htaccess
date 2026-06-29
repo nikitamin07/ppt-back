@@ -1,0 +1,62 @@
+<IfModule mod_setenvif.c>
+  # Vary: Accept for all the requests to jpeg and png
+  SetEnvIf Request_URI "\.(jpe?g|png)$" REQUEST_image
+</IfModule>
+
+
+RewriteEngine On
+
+
+Options -Indexes -MultiViews
+
+RewriteBase     /
+
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} ^(.+)/$
+RewriteRule ^(.+)/$ /$1 [R=301,L]
+
+# Check if browser supports WebP images
+RewriteCond %{HTTP_ACCEPT} image/webp
+
+# Check if WebP replacement image exists
+RewriteCond %{DOCUMENT_ROOT}/$1_%{QUERY_STRING}.webp -f
+
+# Serve WebP image instead
+RewriteRule (.+)\.(jpe?g|png)$ $1_%{QUERY_STRING}.webp [T=image/webp]
+
+#RewriteCond %{REQUEST_FILENAME} -f
+#RewriteCond %{QUERY_STRING} (^|&)(h=[0-9]+|w=[0-9]+|s=[0-9]+x[0-9]+)(&|$)
+#RewriteRule (.+\.(jpe?g|png)) addConvertation.php?filename=$1 [QSA,L]
+
+# Check if WebP replacement image exists
+RewriteCond %{DOCUMENT_ROOT}/$1_%{QUERY_STRING}.webp -f
+
+# Serve WebP image instead
+RewriteRule (.+)\.(jpe?g|png)$ $1_%{QUERY_STRING}.webp [T=image/webp]
+
+RewriteCond %{REQUEST_FILENAME} -f
+RewriteCond %{QUERY_STRING} (^|&)(h=[0-9]+|w=[0-9]+|s=[0-9]+x[0-9]+)(&|$)
+RewriteRule (.+\.(jpe?g|png)) addConvertation.php?filename=$1 [QSA,L]
+
+
+RewriteRule ^index\.php$ - [L]
+RewriteCond %{REQUEST_FILENAME} !-f
+RewriteCond %{REQUEST_FILENAME} !-d
+RewriteCond %{REQUEST_URI} !\.php$
+RewriteRule . index.php [L]
+
+
+<FilesMatch "\.(css|js|jpg|jpeg|gif|png|ico|cur|swf|woff|ttf|eot|webp|svg)$">
+Header set Cache-Control "max-age=31536000, public"
+</FilesMatch>
+
+
+<IfModule mod_headers.c>
+  Header append Vary Accept env=REQUEST_image
+</IfModule>
+
+<IfModule mod_mime.c>
+  AddType image/webp .webp
+</IfModule>
+
+
