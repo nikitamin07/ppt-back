@@ -1,27 +1,31 @@
-# 1. Базовый образ: стабильный PHP 8.2 со встроенным веб-сервером Apache
-FROM php:8.2-apache
+# Production image: Laravel + Filament served by Apache on :80
+# (infra/nginx proxies /admin and /api here).
 
-# 2. Установка системных библиотек Linux и расширений PHP.
-# Сюда входят драйверы для текущей MySQL, будущей PostgreSQL и библиотека GD для картинок.
-RUN apt-get update && apt-get install -y \
-    libpng-dev \
-    libjpeg-dev \
-    libfreetype6-dev \
-    libpq-dev \
-    && docker-php-ext-configure gd --with-freetype --with-jpeg \
-    && docker-php-ext-install -j$(nproc) gd pdo pdo_mysql mysqli pdo_pgsql pgsql
+FROM composer:latest AS vendor
+WORKDIR /app
+COPY composer.json composer.lock ./
+RUN composer install --no-dev --no-scripts --no-autoloader --prefer-dist --ignore-platform-req=ext-intl
+COPY . .
+RUN composer dump-autoload --optimize --no-dev
 
-# 3. Включаем модуль mod_rewrite для Apache
-RUN a2enmod rewrite
+FROM php:8.4-apache
+RUN apt-get update \
+    && apt-get install -y --no-install-recommends libicu-dev libpq-dev \
+    && docker-php-ext-install intl pdo_pgsql opcache \
+    && a2enmod rewrite \
+    && rm -rf /var/lib/apt/lists/*
 
-# 4. Задаем системный корень веб-сервера Apache
+ENV APACHE_DOCUMENT_ROOT=/var/www/html/public
+RUN sed -ri -e 's!/var/www/html!${APACHE_DOCUMENT_ROOT}!g' /etc/apache2/sites-available/*.conf
+
 WORKDIR /var/www/html
+COPY --from=vendor /app ./
+RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
+    && chown -R www-data:www-data storage bootstrap/cache
 
-# 5. Копируем весь исходный код внутрь контейнера
-COPY . /var/www/html/
-
-# 6. Копируем файл-пример в рабочий файл конфигурации.
-RUN cp settings-example.php settings.php
-
-# 7. Декларируем стандартный веб-порт
-EXPOSE 80
+# On every container start: wipe ALL Laravel caches (config/routes/views/events/app cache),
+# then rebuild them for production before serving.
+CMD php artisan optimize:clear \
+    && php artisan optimize \
+    && php artisan filament:optimize \
+    && apache2-foreground
