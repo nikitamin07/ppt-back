@@ -2,24 +2,18 @@
 
 namespace Database\Seeders;
 
-use App\Models\User;
-use Illuminate\Database\Console\Seeds\WithoutModelEvents;
 use Illuminate\Database\Seeder;
 
 class DatabaseSeeder extends Seeder
 {
-    use WithoutModelEvents;
-
     /**
-     * Seed the application's database.
+     * Дефолтный сид пуст намеренно: реальные данные живут в БД (бэкап —
+     * pg_dump вне репозитория), админ-юзеры создаются через make:filament-user.
+     *
+     * Фейковые данные для ручной проверки UI: php artisan db:seed --class=DemoDataSeeder
      */
     public function run(): void
     {
-        // User::factory(10)->create();
-
-        User::factory()->create([
-            'name' => 'Test User',
-            'email' => 'test@example.com',
-        ]);
+        //
     }
 }
