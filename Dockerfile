@@ -24,8 +24,10 @@ RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/fra
     && chown -R www-data:www-data storage bootstrap/cache
 
 # On every container start: wipe ALL Laravel caches (config/routes/views/events/app cache),
-# then rebuild them for production before serving.
+# then rebuild them for production before serving. storage:link exposes admin uploads
+# (storage/app/public, persisted via compose volume) at public/storage.
 CMD php artisan optimize:clear \
     && php artisan optimize \
     && php artisan filament:optimize \
+    && php artisan storage:link --force \
     && apache2-foreground
