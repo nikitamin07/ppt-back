@@ -15,14 +15,13 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 final class ProductController extends Controller
 {
-    private const PER_PAGE = 24;
+    private const PER_PAGE = 8;
 
     public function index(Request $request): AnonymousResourceCollection
     {
         $products = $this->filtered($request)
             ->with(['attributes', 'related'])
             ->orderBy('id')
-            // Без ?page отдаём весь список (каталог небольшой), с ?page — постранично.
             ->when(
                 $request->filled('page'),
                 fn (Builder $query) => $query->forPage(max(1, (int) $request->query('page')), self::PER_PAGE),

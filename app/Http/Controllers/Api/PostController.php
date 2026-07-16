@@ -13,7 +13,7 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 final class PostController extends Controller
 {
-    private const PER_PAGE = 12;
+    private const PER_PAGE = 8;
 
     public function index(Request $request): AnonymousResourceCollection
     {
