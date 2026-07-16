@@ -31,6 +31,10 @@ class ProductsTable
                 TextColumn::make('category.name')
                     ->label('Категория')
                     ->sortable(),
+                TextColumn::make('manufacturer.name')
+                    ->label('Производитель')
+                    ->sortable()
+                    ->toggleable(isToggledHiddenByDefault: true),
                 TextColumn::make('slug')
                     ->label('Слаг')
                     ->searchable()
@@ -45,6 +49,9 @@ class ProductsTable
                     ->sortable(),
                 TextColumn::make('price_unit')
                     ->label('Ед. изм.'),
+                IconColumn::make('is_featured')
+                    ->label('Популярный')
+                    ->boolean(),
                 IconColumn::make('is_active')
                     ->label('Активен')
                     ->boolean(),

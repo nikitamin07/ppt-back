@@ -7,7 +7,8 @@ return [
 
     'paths' => ['api/*'],
 
-    'allowed_methods' => ['GET'],
+    // POST — только фильтрация каталога (POST /api/products/filter), записи в API нет
+    'allowed_methods' => ['GET', 'POST'],
 
     'allowed_origins' => array_filter(explode(',', (string) env(
         'CORS_ALLOWED_ORIGINS',

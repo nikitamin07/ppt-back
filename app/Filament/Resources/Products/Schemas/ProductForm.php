@@ -59,6 +59,11 @@ class ProductForm
                     // Не выбрана подкатегория (или поле скрыто — у корня нет детей) — сохраняем корневую
                     ->dehydratedWhenHidden()
                     ->dehydrateStateUsing(fn ($state, Get $get) => $state ?? $get('root_category')),
+                Select::make('manufacturer_id')
+                    ->label('Производитель')
+                    ->relationship('manufacturer', 'name')
+                    ->searchable()
+                    ->preload(),
                 Textarea::make('description')
                     ->label('Описание')
                     ->rows(12)
@@ -102,6 +107,19 @@ class ProductForm
                     ->image()
                     ->disk('public')
                     ->directory('products'),
+                // Лимит Product::FEATURED_LIMIT: при заполненном блоке переключатель блокируется
+                // (выключить уже популярный товар можно всегда). Страховка — saving-хук модели.
+                Toggle::make('is_featured')
+                    ->label('Показывать в популярных')
+                    ->inline(false)
+                    ->live()
+                    ->disabled(fn (?Product $record, Get $get): bool => ! $get('is_featured')
+                        && Product::where('is_featured', true)->whereKeyNot($record?->getKey())->count() >= Product::FEATURED_LIMIT)
+                    ->helperText(fn (?Product $record, Get $get): ?string => ! $get('is_featured')
+                        && Product::where('is_featured', true)->whereKeyNot($record?->getKey())->count() >= Product::FEATURED_LIMIT
+                            ? 'Максимум популярных товаров, сначала снимите выбор с другого популярного товара'
+                            : null)
+                    ->columnSpanFull(),
                 Toggle::make('is_active')
                     ->label('Активен (показывать на сайте)')
                     ->inline(false)

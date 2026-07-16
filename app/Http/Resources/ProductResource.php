@@ -24,6 +24,7 @@ final class ProductResource extends JsonResource
             'price' => $this->price / 100,
             'discount_price' => $this->discount_price !== null ? $this->discount_price / 100 : null,
             'price_unit' => $this->price_unit,
+            'is_featured' => $this->is_featured,
             'is_volume_price' => $this->is_volume_price,
             'volume_price' => $this->is_volume_price ? [
                 'low' => [

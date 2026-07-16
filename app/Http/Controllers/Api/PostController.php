@@ -15,6 +15,9 @@ final class PostController extends Controller
 {
     private const PER_PAGE = 8;
 
+    /** Блок последних статей на главной. */
+    private const LATEST_LIMIT = 6;
+
     public function index(Request $request): AnonymousResourceCollection
     {
         $posts = Post::published()
@@ -35,6 +38,18 @@ final class PostController extends Controller
             ->get();
 
         return PostResource::collection($posts);
+    }
+
+    /** Главная страница: до 6 последних опубликованных статей (меньше — сколько есть). */
+    public function latest(): AnonymousResourceCollection
+    {
+        return PostResource::collection(
+            Post::published()
+                ->with('tags')
+                ->latest('published_at')
+                ->take(self::LATEST_LIMIT)
+                ->get(),
+        );
     }
 
     public function show(string $slug): PostResource

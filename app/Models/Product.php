@@ -9,30 +9,49 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Validation\ValidationException;
 
 final class Product extends Model
 {
     use HasFactory;
 
     protected $fillable = [
-        'category_id', 'name', 'slug', 'description',
+        'category_id', 'manufacturer_id', 'name', 'slug', 'description',
         'price', 'discount_price', 'price_unit',
         'is_volume_price',
         'volume_price_low', 'volume_price_medium', 'volume_price_high',
         'volume_price_low_label', 'volume_price_medium_label', 'volume_price_high_label',
-        'image', 'is_active',
+        'image', 'is_active', 'is_featured',
     ];
+
+    /** Максимум товаров в блоке «Популярные» (одна страница, без пагинации). */
+    public const FEATURED_LIMIT = 8;
 
     protected function casts(): array
     {
         return [
             'is_volume_price' => 'boolean',
             'is_active' => 'boolean',
+            'is_featured' => 'boolean',
         ];
     }
 
     protected static function booted(): void
     {
+        // Лимит популярных: не даём включить флаг девятому товару (форма админки
+        // блокирует переключатель, это страховка для остальных путей записи).
+        static::saving(function (self $product): void {
+            if (
+                $product->is_featured
+                && $product->isDirty('is_featured')
+                && static::where('is_featured', true)->whereKeyNot($product->getKey())->count() >= self::FEATURED_LIMIT
+            ) {
+                throw ValidationException::withMessages([
+                    'is_featured' => 'Максимум популярных товаров: '.self::FEATURED_LIMIT,
+                ]);
+            }
+        });
+
         // Режимы цены взаимоисключающие: либо обычная цена (+скидка), либо объёмные тарифы.
         static::saving(function (self $product): void {
             if ($product->is_volume_price) {
@@ -57,6 +76,11 @@ final class Product extends Model
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
+    }
+
+    public function manufacturer(): BelongsTo
+    {
+        return $this->belongsTo(Manufacturer::class);
     }
 
     public function attributes(): BelongsToMany
