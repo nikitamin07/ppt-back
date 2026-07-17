@@ -2,35 +2,24 @@
 
 namespace App\Filament\Resources\Posts\Schemas;
 
+use App\Filament\Resources\Concerns\SlugFields;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Str;
 
 class PostForm
 {
+    use SlugFields;
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
             ->components([
-                TextInput::make('title')
-                    ->label('Заголовок')
-                    ->required()
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(function (?string $state, Set $set, string $operation): void {
-                        if ($operation === 'create') {
-                            $set('slug', Str::slug((string) $state));
-                        }
-                    }),
-                TextInput::make('slug')
-                    ->label('Слаг (адрес страницы)')
-                    ->required()
-                    ->unique(ignoreRecord: true),
+                self::titleField('title', 'Заголовок'),
+                self::slugField(),
                 Select::make('tags')
                     ->label('Теги')
                     ->relationship('tags', 'name')

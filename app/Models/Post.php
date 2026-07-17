@@ -31,4 +31,10 @@ final class Post extends Model
     {
         return $query->whereNotNull('published_at')->where('published_at', '<=', now());
     }
+
+    /** Поиск по заголовку: подстрока без учёта регистра, спецсимволы LIKE экранируются. */
+    public function scopeSearch(Builder $query, string $term): Builder
+    {
+        return $query->where('title', 'ilike', '%'.addcslashes($term, '%_\\').'%');
+    }
 }

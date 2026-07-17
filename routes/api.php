@@ -1,6 +1,7 @@
 <?php
 
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\ManufacturerController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProductController;
 use App\Http\Controllers\Api\TagController;
@@ -22,4 +23,6 @@ Route::middleware('throttle:60,1')->group(function (): void {
     Route::get('/posts/{slug}', [PostController::class, 'show']);
 
     Route::get('/tags', [TagController::class, 'index']);
+
+    Route::get('/manufacturers', [ManufacturerController::class, 'index']);
 });

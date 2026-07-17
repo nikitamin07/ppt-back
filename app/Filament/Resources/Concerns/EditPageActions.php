@@ -4,12 +4,13 @@ namespace App\Filament\Resources\Concerns;
 
 use Filament\Actions\Action;
 use Filament\Actions\DeleteAction;
+use Filament\Resources\Pages\EditRecord;
 
 /**
  * Edit-страницы: в шапке вместо Delete — «назад к списку»,
  * Delete — в подвале формы справа (Save/Cancel слева).
  *
- * @mixin \Filament\Resources\Pages\EditRecord
+ * @mixin EditRecord
  */
 trait EditPageActions
 {

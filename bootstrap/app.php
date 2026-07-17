@@ -16,6 +16,11 @@ return Application::configure(basePath: dirname(__DIR__))
         // Приложение живёт за nginx-прокси: схему (http/https) и IP клиента
         // берём из X-Forwarded-* заголовков, которые проставляет nginx.
         $middleware->trustProxies(at: '*');
+
+        // Кириллица в ответах API — без \uXXXX-экранирования
+        $middleware->api(append: [
+            \App\Http\Middleware\UnescapedJsonResponse::class,
+        ]);
     })
     ->withExceptions(function (Exceptions $exceptions): void {
         $exceptions->shouldRenderJsonWhen(

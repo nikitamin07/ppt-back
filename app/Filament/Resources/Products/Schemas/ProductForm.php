@@ -2,37 +2,29 @@
 
 namespace App\Filament\Resources\Products\Schemas;
 
+use App\Filament\Resources\Concerns\SlugFields;
 use App\Models\Category;
 use App\Models\Product;
+use Closure;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
+use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
-use Illuminate\Support\Str;
 
 class ProductForm
 {
+    use SlugFields;
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
             ->components([
-                TextInput::make('name')
-                    ->label('Название')
-                    ->required()
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(function (?string $state, Set $set, string $operation): void {
-                        if ($operation === 'create') {
-                            $set('slug', Str::slug((string) $state));
-                        }
-                    }),
-                TextInput::make('slug')
-                    ->label('Слаг (адрес страницы)')
-                    ->required()
-                    ->unique(ignoreRecord: true),
+                self::titleField('name', 'Название'),
+                self::slugField(),
                 // Двухступенчатый выбор: сначала корневая категория, затем (если есть) её подкатегория.
                 // В category_id сохраняется подкатегория, а если она не выбрана — сама корневая.
                 Select::make('root_category')
@@ -78,25 +70,25 @@ class ProductForm
                     ->label('Цена')
                     ->required()
                     ->default(0)
-                    ->hidden(fn (Get $get): bool => (bool) $get('is_volume_price')),
+                    ->hidden(self::inVolumeMode()),
                 self::money('discount_price')
                     ->label('Цена со скидкой')
-                    ->hidden(fn (Get $get): bool => (bool) $get('is_volume_price')),
+                    ->hidden(self::inVolumeMode()),
                 // Три тарифа парами «цена слева — пояснение справа»; required действует
                 // только когда поле видимо, т.е. в объёмном режиме
                 self::money('volume_price_low')
                     ->label('Цена за маленький объем (Low volume price)')
                     ->required()
-                    ->visible(fn (Get $get): bool => (bool) $get('is_volume_price')),
+                    ->visible(self::inVolumeMode()),
                 self::volumeLabel('volume_price_low_label', 'например: до 10 кубов'),
                 self::money('volume_price_medium')
                     ->label('Цена за средний объем (Medium volume price)')
                     ->required()
-                    ->visible(fn (Get $get): bool => (bool) $get('is_volume_price')),
+                    ->visible(self::inVolumeMode()),
                 self::volumeLabel('volume_price_medium_label', 'например: от 10 до 20 кубов'),
                 self::money('volume_price_high')
                     ->label('Цена за большой объем (High volume price)')
-                    ->visible(fn (Get $get): bool => (bool) $get('is_volume_price')),
+                    ->visible(self::inVolumeMode()),
                 self::volumeLabel('volume_price_high_label', 'например: от 20 кубов'),
                 TextInput::make('price_unit')
                     ->label('Единица измерения')
@@ -107,18 +99,14 @@ class ProductForm
                     ->image()
                     ->disk('public')
                     ->directory('products'),
-                // Лимит Product::FEATURED_LIMIT: при заполненном блоке переключатель блокируется
-                // (выключить уже популярный товар можно всегда). Страховка — saving-хук модели.
                 Toggle::make('is_featured')
                     ->label('Показывать в популярных')
                     ->inline(false)
                     ->live()
-                    ->disabled(fn (?Product $record, Get $get): bool => ! $get('is_featured')
-                        && Product::where('is_featured', true)->whereKeyNot($record?->getKey())->count() >= Product::FEATURED_LIMIT)
-                    ->helperText(fn (?Product $record, Get $get): ?string => ! $get('is_featured')
-                        && Product::where('is_featured', true)->whereKeyNot($record?->getKey())->count() >= Product::FEATURED_LIMIT
-                            ? 'Максимум популярных товаров, сначала снимите выбор с другого популярного товара'
-                            : null)
+                    ->disabled(fn (?Product $record, Get $get): bool => self::featuredLocked($record, $get))
+                    ->helperText(fn (?Product $record, Get $get): ?string => self::featuredLocked($record, $get)
+                        ? 'Максимум популярных товаров, сначала снимите выбор с другого популярного товара'
+                        : null)
                     ->columnSpanFull(),
                 Toggle::make('is_active')
                     ->label('Активен (показывать на сайте)')
@@ -128,13 +116,29 @@ class ProductForm
             ]);
     }
 
+    /** Включён ли режим объёмных цен — от него зависит видимость всего ценового блока. */
+    private static function inVolumeMode(): Closure
+    {
+        return fn (Get $get): bool => (bool) $get('is_volume_price');
+    }
+
+    /**
+     * Блок «Популярные» заполнен, а этот товар в него не входит: включить нельзя
+     * (выключить уже популярный можно всегда). Страховка — saving-хук Product.
+     */
+    private static function featuredLocked(?Product $record, Get $get): bool
+    {
+        return ! $get('is_featured')
+            && Product::where('is_featured', true)->whereKeyNot($record?->getKey())->count() >= Product::FEATURED_LIMIT;
+    }
+
     /** Свободный текст-пояснение к объёмному тарифу (не всегда кубы — вводит менеджер). */
     private static function volumeLabel(string $name, string $placeholder): TextInput
     {
         return TextInput::make($name)
             ->label('Пояснение')
             ->placeholder($placeholder)
-            ->visible(fn (Get $get): bool => (bool) $get('is_volume_price'));
+            ->visible(self::inVolumeMode());
     }
 
     /** В БД цены в копейках, админ вводит рубли. */

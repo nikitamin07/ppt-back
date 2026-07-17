@@ -40,7 +40,7 @@ final class Product extends Model
     {
         // Лимит популярных: не даём включить флаг девятому товару (форма админки
         // блокирует переключатель, это страховка для остальных путей записи).
-        static::saving(function (self $product): void {
+        self::saving(function (self $product): void {
             if (
                 $product->is_featured
                 && $product->isDirty('is_featured')
@@ -53,7 +53,7 @@ final class Product extends Model
         });
 
         // Режимы цены взаимоисключающие: либо обычная цена (+скидка), либо объёмные тарифы.
-        static::saving(function (self $product): void {
+        self::saving(function (self $product): void {
             if ($product->is_volume_price) {
                 // Карточка товара на фронте всегда показывает price — держим её равной самому дешёвому
                 // из заполненных тарифов (high опционален, см. products_price_mode_check).
@@ -98,5 +98,11 @@ final class Product extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    /** Поиск по названию: подстрока без учёта регистра, спецсимволы LIKE экранируются. */
+    public function scopeSearch(Builder $query, string $term): Builder
+    {
+        return $query->where('name', 'ilike', '%'.addcslashes($term, '%_\\').'%');
     }
 }

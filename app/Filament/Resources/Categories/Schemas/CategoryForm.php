@@ -2,34 +2,23 @@
 
 namespace App\Filament\Resources\Categories\Schemas;
 
+use App\Filament\Resources\Concerns\SlugFields;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Textarea;
-use Filament\Schemas\Components\Utilities\Set;
 use Filament\Schemas\Schema;
 use Illuminate\Database\Eloquent\Builder;
 use Illuminate\Database\Eloquent\Model;
-use Illuminate\Support\Str;
 
 class CategoryForm
 {
+    use SlugFields;
+
     public static function configure(Schema $schema): Schema
     {
         return $schema
             ->components([
-                TextInput::make('name')
-                    ->label('Название')
-                    ->required()
-                    ->live(onBlur: true)
-                    ->afterStateUpdated(function (?string $state, Set $set, string $operation): void {
-                        if ($operation === 'create') {
-                            $set('slug', Str::slug((string) $state));
-                        }
-                    }),
-                TextInput::make('slug')
-                    ->label('Слаг (адрес страницы)')
-                    ->required()
-                    ->unique(ignoreRecord: true),
+                self::titleField('name', 'Название'),
+                self::slugField(),
                 // Дерево строго одноуровневое: родителем может быть только корневая категория (и не она сама),
                 // а категории, у которой уже есть дети, родителя назначить нельзя.
                 Select::make('parent_id')

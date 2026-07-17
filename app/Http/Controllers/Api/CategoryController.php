@@ -18,7 +18,7 @@ final class CategoryController extends Controller
         return CategoryResource::collection(
             Category::query()
                 ->whereNull('parent_id')
-                ->with(['children' => fn ($query) => $query->orderBy('id')])
+                ->with('children')
                 ->orderBy('id')
                 ->get(),
         );
@@ -34,7 +34,7 @@ final class CategoryController extends Controller
         return new CategoryResource(
             Category::query()
                 ->where('slug', $slug)
-                ->with(['children' => fn ($query) => $query->orderBy('id')])
+                ->with('children')
                 ->firstOrFail(),
         );
     }
