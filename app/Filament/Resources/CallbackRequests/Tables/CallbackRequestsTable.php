@@ -9,6 +9,10 @@ use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\TernaryFilter;
 use Filament\Tables\Table;
 
+/**
+ * Общий набор колонок для заявок — больше не привязан к отдельному Resource (см.
+ * app/Filament/Pages/Statistics/AllCallbackRequestsTable.php, единственный потребитель).
+ */
 class CallbackRequestsTable
 {
     public static function configure(Table $table): Table
