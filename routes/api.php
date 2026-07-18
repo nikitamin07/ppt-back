@@ -1,5 +1,6 @@
 <?php
 
+use App\Http\Controllers\Api\CallbackController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ManufacturerController;
 use App\Http\Controllers\Api\PostController;
@@ -25,4 +26,6 @@ Route::middleware('throttle:60,1')->group(function (): void {
     Route::get('/tags', [TagController::class, 'index']);
 
     Route::get('/manufacturers', [ManufacturerController::class, 'index']);
+
+    Route::post('/callback', [CallbackController::class, 'store']);
 });

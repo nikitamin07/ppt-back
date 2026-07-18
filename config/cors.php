@@ -1,13 +1,13 @@
 <?php
 
-// API только читается браузером с фронтенда: разрешаем GET с доверенных Origin.
+// API читается и частично пишется браузером с фронтенда: разрешаем GET+POST с доверенных Origin.
 // В проде фронт и /api живут на одном домене за nginx (CORS не задействуется),
 // заголовки нужны для dev-режима (next dev на :3000) и на случай разнесения доменов.
 return [
 
     'paths' => ['api/*'],
 
-    // POST — только фильтрация каталога (POST /api/products/filter), записи в API нет
+    // POST — фильтрация каталога (POST /api/products/filter) и форма обратного звонка (POST /api/callback)
     'allowed_methods' => ['GET', 'POST'],
 
     'allowed_origins' => array_filter(explode(',', (string) env(
