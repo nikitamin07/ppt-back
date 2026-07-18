@@ -5,6 +5,7 @@ use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\ManufacturerController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProductController;
+use App\Http\Controllers\Api\SiteVisitController;
 use App\Http\Controllers\Api\TagController;
 use Illuminate\Support\Facades\Route;
 
@@ -28,4 +29,6 @@ Route::middleware('throttle:60,1')->group(function (): void {
     Route::get('/manufacturers', [ManufacturerController::class, 'index']);
 
     Route::post('/callback', [CallbackController::class, 'store']);
+
+    Route::post('/track-visit', [SiteVisitController::class, 'store']);
 });

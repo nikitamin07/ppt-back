@@ -7,7 +7,8 @@ return [
 
     'paths' => ['api/*'],
 
-    // POST — фильтрация каталога (POST /api/products/filter) и форма обратного звонка (POST /api/callback)
+    // POST — фильтрация каталога (POST /api/products/filter), форма обратного звонка (POST /api/callback)
+    // и счётчик заходов (POST /api/track-visit)
     'allowed_methods' => ['GET', 'POST'],
 
     'allowed_origins' => array_filter(explode(',', (string) env(
