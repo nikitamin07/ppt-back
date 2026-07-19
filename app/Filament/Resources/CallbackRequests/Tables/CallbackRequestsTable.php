@@ -33,7 +33,9 @@ class CallbackRequestsTable
                 TextColumn::make('source_url')
                     ->label('Страница')
                     ->limit(40)
-                    ->url(fn (?string $state): ?string => $state)
+                    // Валидация на приёме (CallbackController) уже режет non-http(s), но старые
+                    // записи могли попасть в БД до фикса — перепроверяем схему и на рендере.
+                    ->url(fn (?string $state): ?string => $state && preg_match('#^https?://#i', $state) ? $state : null)
                     ->openUrlInNewTab()
                     ->placeholder('—'),
                 TextColumn::make('created_at')

@@ -21,7 +21,9 @@ final class CallbackController extends Controller
             'name' => ['required', 'string', 'max:255'],
             'phone' => ['required', 'string', 'max:32'],
             'comment' => ['nullable', 'string', 'max:2000'],
-            'source_url' => ['nullable', 'string', 'max:2048'],
+            // Рендерится в админке как кликабельная ссылка (CallbackRequestsTable) — только http(s),
+            // иначе клиент мог бы подсунуть javascript:... и получить XSS в сессии админа.
+            'source_url' => ['nullable', 'url:http,https', 'max:2048'],
         ]);
 
         CallbackRequest::create($data);
