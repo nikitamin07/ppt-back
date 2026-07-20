@@ -2,14 +2,17 @@
 
 namespace App\Filament\Resources\Products\RelationManagers;
 
+use App\Models\Attribute;
 use Filament\Actions\AttachAction;
 use Filament\Actions\DetachAction;
 use Filament\Actions\EditAction;
 use Filament\Forms\Components\TextInput;
 use Filament\Resources\RelationManagers\RelationManager;
+use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Support\Str;
 
 /**
  * Характеристики товара: pivot attribute_product (value, position).
@@ -21,6 +24,10 @@ class AttributesRelationManager extends RelationManager
     protected static string $relationship = 'attributes';
 
     protected static ?string $title = 'Характеристики';
+
+    // Без этого AttachAction не знает, какое поле показывать в списке выбора,
+    // и подставляет название модели («Attribute») одинаковое для каждой строки.
+    protected static ?string $recordTitleAttribute = 'name';
 
     public function form(Schema $schema): Schema
     {
@@ -46,13 +53,31 @@ class AttributesRelationManager extends RelationManager
                 AttachAction::make()
                     ->preloadRecordSelect()
                     ->schema(fn (AttachAction $action): array => [
-                        $action->getRecordSelect(),
+                        $action->getRecordSelect()
+                            ->label('Выбрать существующую')
+                            ->hiddenLabel(false)
+                            ->live()
+                            ->required(fn (Get $get): bool => blank($get('new_attribute_name'))),
+                        TextInput::make('new_attribute_name')
+                            ->label('Или добавить новую')
+                            ->maxLength(255)
+                            ->live()
+                            ->required(fn (Get $get): bool => blank($get('recordId'))),
                         TextInput::make('value')
                             ->label('Значение')
                             ->required(),
                     ])
-                    // Новая характеристика встаёт в конец списка
                     ->mutateDataUsing(function (array $data): array {
+                        // Ввели новое имя — заводим (или переиспользуем по слагу) Attribute и подставляем его id
+                        if (filled($data['new_attribute_name'] ?? null)) {
+                            $data['recordId'] = Attribute::firstOrCreate(
+                                ['slug' => Str::slug($data['new_attribute_name'])],
+                                ['name' => $data['new_attribute_name']],
+                            )->getKey();
+                        }
+                        unset($data['new_attribute_name']);
+
+                        // Новая характеристика встаёт в конец списка
                         $data['position'] = $this->getOwnerRecord()->attributes()->max('attribute_product.position') + 1;
 
                         return $data;
