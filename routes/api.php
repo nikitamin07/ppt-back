@@ -28,7 +28,10 @@ Route::middleware('throttle:60,1')->group(function (): void {
 
     Route::get('/manufacturers', [ManufacturerController::class, 'index']);
 
-    Route::post('/callback', [CallbackController::class, 'store']);
+    // Отдельный лимит с отдельным префиксом ключа: у ThrottleRequests ключ = "prefix.domain|ip" без учёта
+    // самих значений лимита, так что без префикса этот лимит делил бы счётчик с общим throttle:60,1
+    // группы (тот же ключ) и удваивал бы инкремент на каждый запрос к /callback.
+    Route::post('/callback', [CallbackController::class, 'store'])->middleware('throttle:10,1,callback');
 
     Route::post('/track-visit', [SiteVisitController::class, 'store']);
 });
