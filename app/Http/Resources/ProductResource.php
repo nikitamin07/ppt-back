@@ -16,6 +16,9 @@ final class ProductResource extends ProductListResource
             'description' => (string) $this->description,
             // Показывать ли калькулятор объёма (см. Product::isCalculative)
             'isCalculative' => $this->resource->isCalculative(),
+            // Толщина в мм для калькулятора: дубль характеристики «Толщина», 30 по умолчанию.
+            // null у категорий без калькулятора — там она не нужна.
+            'thickness' => $this->resource->thicknessForCalculator(),
             // Кубов в одной уп./шт.; null, когда цена и так за куб
             'cubes_per_pack' => $this->cubes_per_pack,
             // Вся галерея в порядке из админки; image_url — её первый элемент

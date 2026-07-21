@@ -107,6 +107,25 @@ final class Product extends Model
         return $this->price_unit === 'куб' || $this->cubes_per_pack !== null;
     }
 
+    /** Толщина по умолчанию, когда у товара её нет, а калькулятору нужно с чего-то начать. */
+    public const DEFAULT_THICKNESS = 30;
+
+    /**
+     * Толщина в мм для предзаполнения калькулятора: из характеристики «Толщина»,
+     * иначе дефолт. null там, где калькулятора нет вовсе — считать нечего.
+     */
+    public function thicknessForCalculator(): ?int
+    {
+        if (! ($this->category?->showsCalculator() ?? false)) {
+            return null;
+        }
+
+        // getRelationValue, а не $this->attributes: внутри модели это поле Eloquent, а не связь
+        $value = $this->getRelationValue('attributes')?->firstWhere('name', 'Толщина')?->pivot->value;
+
+        return $value !== null && preg_match('/\d+/', $value, $m) ? (int) $m[0] : self::DEFAULT_THICKNESS;
+    }
+
     public function category(): BelongsTo
     {
         return $this->belongsTo(Category::class);
