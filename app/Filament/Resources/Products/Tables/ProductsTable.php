@@ -3,6 +3,7 @@
 namespace App\Filament\Resources\Products\Tables;
 
 use App\Models\Product;
+use Closure;
 use Filament\Actions\Action;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
@@ -29,6 +30,12 @@ class ProductsTable
         return ($livewire->activeTab ?? null) === 'featured';
     }
 
+    /** Вкладка «Популярные» — только про состав блока: всё остальное правится в общем списке. */
+    private static function exceptOnFeaturedTab(): Closure
+    {
+        return fn ($livewire): bool => ! self::onFeaturedTab($livewire);
+    }
+
     public static function configure(Table $table): Table
     {
         return $table
@@ -47,29 +54,36 @@ class ProductsTable
                 TextColumn::make('manufacturer.name')
                     ->label('Производитель')
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(self::exceptOnFeaturedTab()),
                 TextColumn::make('slug')
                     ->label('Слаг')
                     ->searchable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(self::exceptOnFeaturedTab()),
                 TextColumn::make('price')
                     ->label('Цена')
                     ->formatStateUsing(fn (?int $state): ?string => self::rubles($state))
-                    ->sortable(),
+                    ->sortable()
+                    ->visible(self::exceptOnFeaturedTab()),
                 TextColumn::make('discount_price')
                     ->label('Цена со скидкой')
                     ->formatStateUsing(fn (?int $state): ?string => self::rubles($state))
-                    ->sortable(),
+                    ->sortable()
+                    ->visible(self::exceptOnFeaturedTab()),
                 TextColumn::make('price_unit')
-                    ->label('Ед. изм.'),
+                    ->label('Ед. изм.')
+                    ->visible(self::exceptOnFeaturedTab()),
                 IconColumn::make('is_active')
                     ->label('Активен')
-                    ->boolean(),
+                    ->boolean()
+                    ->visible(self::exceptOnFeaturedTab()),
                 TextColumn::make('updated_at')
                     ->label('Обновлено')
                     ->dateTime()
                     ->sortable()
-                    ->toggleable(isToggledHiddenByDefault: true),
+                    ->toggleable(isToggledHiddenByDefault: true)
+                    ->visible(self::exceptOnFeaturedTab()),
             ])
             ->filters([
                 SelectFilter::make('category_id')
@@ -80,7 +94,7 @@ class ProductsTable
             ])
             ->recordActions([
                 self::toggleFeaturedAction(),
-                EditAction::make(),
+                EditAction::make()->visible(self::exceptOnFeaturedTab()),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
