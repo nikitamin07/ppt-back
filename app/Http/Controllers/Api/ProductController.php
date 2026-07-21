@@ -6,6 +6,7 @@ namespace App\Http\Controllers\Api;
 
 use App\Http\Controllers\Controller;
 use App\Http\Resources\ProductListResource;
+use App\Http\Resources\ProductMetaResource;
 use App\Http\Resources\ProductResource;
 use App\Models\Category;
 use App\Models\Product;
@@ -119,6 +120,18 @@ final class ProductController extends Controller
             ->firstOrFail();
 
         return new ProductResource($product);
+    }
+
+    /** Для generateMetadata на фронте: без описания и характеристик — только теги страницы. */
+    public function meta(string $categorySlug, string $productSlug): ProductMetaResource
+    {
+        $product = Product::active()
+            ->where('slug', $productSlug)
+            ->whereRelation('category', 'slug', $categorySlug)
+            ->with('category')
+            ->firstOrFail();
+
+        return new ProductMetaResource($product);
     }
 
     /** Номер страницы из ?page: мусор и отсутствие параметра дают первую. */

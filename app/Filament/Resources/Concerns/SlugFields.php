@@ -2,6 +2,7 @@
 
 namespace App\Filament\Resources\Concerns;
 
+use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Components\Utilities\Set;
 use Illuminate\Support\Str;
@@ -27,5 +28,16 @@ trait SlugFields
             ->required()
             ->readOnly()
             ->unique(ignoreRecord: true);
+    }
+
+    /** Текст под <meta name="description">: в выдаче Google обрезается примерно на 160 символах. */
+    private static function metaDescriptionField(): Textarea
+    {
+        return Textarea::make('meta_description')
+            ->label('Meta-описание')
+            ->helperText('Для сниппета в поиске. Оптимально 150–160 символов — длиннее Google обрежет.')
+            ->maxLength(255)
+            ->rows(3)
+            ->columnSpanFull();
     }
 }

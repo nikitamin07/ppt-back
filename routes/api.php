@@ -13,12 +13,14 @@ Route::middleware('throttle:60,1')->group(function (): void {
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/count', [CategoryController::class, 'count']);
     Route::get('/categories/{slug}', [CategoryController::class, 'show']);
+    Route::get('/categories/{slug}/meta', [CategoryController::class, 'meta']);
 
     Route::get('/products', [ProductController::class, 'index']);
     Route::get('/products/count', [ProductController::class, 'count']);
     Route::get('/products/featured', [ProductController::class, 'featured']);
     Route::post('/products/filter', [ProductController::class, 'filter']);
     Route::get('/products/{categorySlug}/{productSlug}', [ProductController::class, 'show']);
+    Route::get('/products/{categorySlug}/{productSlug}/meta', [ProductController::class, 'meta']);
 
     Route::get('/posts', [PostController::class, 'index']);
     Route::get('/posts/latest', [PostController::class, 'latest']);

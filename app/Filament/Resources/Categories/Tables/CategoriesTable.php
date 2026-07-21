@@ -7,19 +7,24 @@ use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
+use Illuminate\Database\Eloquent\Builder;
 
 class CategoriesTable
 {
     public static function configure(Table $table): Table
     {
         return $table
+            // Список — только корневые категории; подкатегории редактируются внутри своего родителя
+            ->modifyQueryUsing(fn (Builder $query) => $query->whereNull('parent_id'))
+            ->reorderable('position')
+            ->defaultSort('position')
             ->columns([
                 TextColumn::make('name')
                     ->label('Название')
                     ->searchable(),
-                TextColumn::make('parent.name')
-                    ->label('Родительская категория')
-                    ->searchable(),
+                TextColumn::make('children_count')
+                    ->label('Подкатегорий')
+                    ->counts('children'),
                 TextColumn::make('slug')
                     ->label('Слаг')
                     ->searchable(),

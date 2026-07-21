@@ -7,7 +7,10 @@ namespace App\Http\Resources;
 use Illuminate\Http\Request;
 use Illuminate\Http\Resources\Json\JsonResource;
 
-/** Формат зеркалит ppt-front/src/entities/category/model/types.ts. */
+/**
+ * Одна конкретная категория — единственное место, где отдаётся description.
+ * Дерево каталога использует CategoryListResource (без описания).
+ */
 final class CategoryResource extends JsonResource
 {
     public function toArray(Request $request): array
@@ -18,7 +21,7 @@ final class CategoryResource extends JsonResource
             'slug' => $this->slug,
             'name' => $this->name,
             'description' => (string) $this->description,
-            'children' => self::collection($this->whenLoaded('children')),
+            'children' => CategoryListResource::collection($this->whenLoaded('children')),
         ];
     }
 }

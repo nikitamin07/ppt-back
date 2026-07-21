@@ -15,7 +15,15 @@ final class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['parent_id', 'name', 'slug', 'description'];
+    protected $fillable = ['parent_id', 'name', 'slug', 'description', 'meta_description', 'position'];
+
+    protected static function booted(): void
+    {
+        // Новая категория встаёт в конец списка, а не в начало (position по умолчанию 0)
+        static::creating(function (self $category): void {
+            $category->position ??= (int) self::max('position') + 1;
+        });
+    }
 
     public function parent(): BelongsTo
     {

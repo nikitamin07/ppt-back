@@ -60,6 +60,7 @@ class ProductForm
                     ->label('Описание')
                     ->rows(12)
                     ->columnSpanFull(),
+                self::metaDescriptionField(),
                 // Режим цены: либо обычная цена (+скидка), либо объёмные тарифы (low и medium обязательны)
                 Toggle::make('is_volume_price')
                     ->label('Цена зависит от объема')
