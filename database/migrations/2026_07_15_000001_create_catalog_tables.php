@@ -31,11 +31,11 @@ return new class extends Migration
             $table->timestamps();
         });
 
-        // Справочник характеристик ("плотность", "влагостойкость", ...)
+        // Справочник характеристик ("плотность", "влагостойкость", ...).
+        // Ключ — само имя: наружу характеристика отдаётся именем, в адресах её нет.
         Schema::create('attributes', function (Blueprint $table): void {
             $table->id();
-            $table->string('name', 80);
-            $table->string('slug')->unique();
+            $table->string('name', 80)->unique();
             $table->timestamps();
         });
 

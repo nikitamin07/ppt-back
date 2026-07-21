@@ -9,7 +9,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsToMany;
 
 final class Attribute extends Model
 {
-    protected $fillable = ['name', 'slug'];
+    protected $fillable = ['name'];
 
     public function products(): BelongsToMany
     {

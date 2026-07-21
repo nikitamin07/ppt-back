@@ -12,7 +12,6 @@ use Filament\Schemas\Components\Utilities\Get;
 use Filament\Schemas\Schema;
 use Filament\Tables\Columns\TextColumn;
 use Filament\Tables\Table;
-use Illuminate\Support\Str;
 
 /**
  * Характеристики товара: pivot attribute_product (value, position).
@@ -72,10 +71,9 @@ class AttributesRelationManager extends RelationManager
                             ->maxLength(20),
                     ])
                     ->mutateDataUsing(function (array $data): array {
-                        // Ввели новое имя — заводим (или переиспользуем по слагу) Attribute и подставляем его id
+                        // Ввели новое имя — заводим (или переиспользуем одноимённую) Attribute и подставляем её id
                         if (filled($data['new_attribute_name'] ?? null)) {
                             $data['recordId'] = Attribute::firstOrCreate(
-                                ['slug' => Str::slug($data['new_attribute_name'])],
                                 ['name' => $data['new_attribute_name']],
                             )->getKey();
                         }
