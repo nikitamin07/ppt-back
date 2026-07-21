@@ -18,6 +18,8 @@ final class ProductResource extends ProductListResource
             'isCalculative' => $this->resource->isCalculative(),
             // Кубов в одной уп./шт.; null, когда цена и так за куб
             'cubes_per_pack' => $this->cubes_per_pack,
+            // Вся галерея в порядке из админки; image_url — её первый элемент
+            'image_urls' => self::uploadUrls($this->images),
             'attributes' => $this->whenLoaded(
                 'attributes',
                 fn () => $this->attributes->map(fn ($attribute) => [

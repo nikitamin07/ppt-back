@@ -19,7 +19,8 @@ final class ProductMetaResource extends JsonResource
             'slug' => $this->slug,
             'name' => $this->name,
             'meta_description' => (string) $this->meta_description,
-            'image_url' => self::uploadUrl($this->image),
+            // og:image — первая картинка галереи
+            'image_url' => self::uploadUrls($this->images)[0] ?? null,
             'category_slug' => $this->whenLoaded('category', fn () => $this->category?->slug),
         ];
     }

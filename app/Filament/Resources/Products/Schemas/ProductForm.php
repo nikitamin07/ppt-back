@@ -104,23 +104,21 @@ class ProductForm
                     ->label('Кубов в упаковке (для калькулятора)')
                     ->helperText('Сколько кубометров в одной единице товара, например 0,288.')
                     ->numeric()
-                    ->minValue(0)
+                    ->minValue(0.0001)
                     ->step(0.0001)
+                    // Поле показано ровно тогда, когда без него калькулятор не посчитает
+                    ->required()
                     ->visible(fn (Get $get): bool => self::needsCubesPerPack($get('price_unit'), $get('root_category')))
                     ->dehydratedWhenHidden(false),
-                FileUpload::make('image')
-                    ->label('Изображение')
+                FileUpload::make('images')
+                    ->label('Изображения')
+                    ->helperText('Первая картинка идёт на карточку товара и в соцсети. Порядок меняется перетаскиванием.')
                     ->image()
+                    ->multiple()
+                    ->reorderable()
+                    ->appendFiles()
                     ->disk('public')
-                    ->directory('products'),
-                Toggle::make('is_featured')
-                    ->label('Показывать в популярных')
-                    ->inline(false)
-                    ->live()
-                    ->disabled(fn (?Product $record, Get $get): bool => self::featuredLocked($record, $get))
-                    ->helperText(fn (?Product $record, Get $get): ?string => self::featuredLocked($record, $get)
-                        ? 'Максимум популярных товаров, сначала снимите выбор с другого популярного товара'
-                        : null)
+                    ->directory('products')
                     ->columnSpanFull(),
                 Toggle::make('is_active')
                     ->label('Активен (показывать на сайте)')
@@ -144,16 +142,6 @@ class ProductForm
     private static function inVolumeMode(): Closure
     {
         return fn (Get $get): bool => (bool) $get('is_volume_price');
-    }
-
-    /**
-     * Блок «Популярные» заполнен, а этот товар в него не входит: включить нельзя
-     * (выключить уже популярный можно всегда). Страховка — saving-хук Product.
-     */
-    private static function featuredLocked(?Product $record, Get $get): bool
-    {
-        return ! $get('is_featured')
-            && Product::where('is_featured', true)->whereKeyNot($record?->getKey())->count() >= Product::FEATURED_LIMIT;
     }
 
     /** Свободный текст-пояснение к объёмному тарифу (не всегда кубы — вводит менеджер). */

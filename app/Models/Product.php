@@ -21,7 +21,7 @@ final class Product extends Model
         'is_volume_price',
         'volume_price_low', 'volume_price_medium', 'volume_price_high',
         'volume_price_low_label', 'volume_price_medium_label', 'volume_price_high_label',
-        'image', 'is_active', 'is_featured', 'cubes_per_pack',
+        'images', 'is_active', 'is_featured', 'featured_position', 'cubes_per_pack',
     ];
 
     /** Максимум товаров в блоке «Популярные» (одна страница, без пагинации). */
@@ -37,6 +37,7 @@ final class Product extends Model
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
             'cubes_per_pack' => 'float',
+            'images' => 'array',
         ];
     }
 
@@ -53,6 +54,15 @@ final class Product extends Model
                 throw ValidationException::withMessages([
                     'is_featured' => 'Максимум популярных товаров: '.self::FEATURED_LIMIT,
                 ]);
+            }
+        });
+
+        // Позиция в блоке «Популярные»: новый товар встаёт в конец, снятый — теряет позицию.
+        self::saving(function (self $product): void {
+            if (! $product->is_featured) {
+                $product->featured_position = null;
+            } elseif ($product->featured_position === null) {
+                $product->featured_position = (int) static::max('featured_position') + 1;
             }
         });
 
@@ -122,6 +132,12 @@ final class Product extends Model
     public function scopeActive(Builder $query): Builder
     {
         return $query->where('is_active', true);
+    }
+
+    /** Блок «Популярные» в порядке, заданном админом перетаскиванием. */
+    public function scopeFeatured(Builder $query): Builder
+    {
+        return $query->where('is_featured', true)->orderBy('featured_position');
     }
 
     /** Поиск по названию: подстрока без учёта регистра, спецсимволы LIKE экранируются. */

@@ -38,7 +38,8 @@ class ProductListResource extends JsonResource
                 'medium' => self::tier($this->volume_price_medium, $this->volume_price_medium_label),
                 'high' => self::tier($this->volume_price_high, $this->volume_price_high_label),
             ] : null,
-            'image_url' => self::uploadUrl($this->image),
+            // Карточке хватает первой картинки; вся галерея — только в ProductResource
+            'image_url' => self::uploadUrls($this->images)[0] ?? null,
             'manufacturer' => $this->whenLoaded(
                 'manufacturer',
                 fn () => $this->manufacturer !== null ? [

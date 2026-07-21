@@ -98,14 +98,13 @@ final class ProductController extends Controller
         ]);
     }
 
-    /** Блок «Популярные»: максимум Product::FEATURED_LIMIT товаров, без пагинации. */
+    /** Блок «Популярные»: максимум Product::FEATURED_LIMIT товаров, без пагинации, в порядке из админки. */
     public function featured(): AnonymousResourceCollection
     {
         return ProductListResource::collection(
             Product::active()
-                ->where('is_featured', true)
+                ->featured()
                 ->with(self::CARD_RELATIONS)
-                ->orderBy('id')
                 ->take(Product::FEATURED_LIMIT)
                 ->get(),
         );
