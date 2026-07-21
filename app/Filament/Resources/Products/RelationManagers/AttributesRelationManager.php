@@ -35,7 +35,8 @@ class AttributesRelationManager extends RelationManager
             ->components([
                 TextInput::make('value')
                     ->label('Значение')
-                    ->required(),
+                    ->required()
+                    ->maxLength(20),
             ]);
     }
 
@@ -51,6 +52,8 @@ class AttributesRelationManager extends RelationManager
             ])
             ->headerActions([
                 AttachAction::make()
+                    ->label('Добавить хар-ку')
+                    ->modalHeading('Добавить хар-ку')
                     ->preloadRecordSelect()
                     ->schema(fn (AttachAction $action): array => [
                         $action->getRecordSelect()
@@ -60,12 +63,13 @@ class AttributesRelationManager extends RelationManager
                             ->required(fn (Get $get): bool => blank($get('new_attribute_name'))),
                         TextInput::make('new_attribute_name')
                             ->label('Или добавить новую')
-                            ->maxLength(255)
+                            ->maxLength(80)
                             ->live()
                             ->required(fn (Get $get): bool => blank($get('recordId'))),
                         TextInput::make('value')
                             ->label('Значение')
-                            ->required(),
+                            ->required()
+                            ->maxLength(20),
                     ])
                     ->mutateDataUsing(function (array $data): array {
                         // Ввели новое имя — заводим (или переиспользуем по слагу) Attribute и подставляем его id

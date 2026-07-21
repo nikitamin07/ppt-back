@@ -2,6 +2,7 @@
 
 use Illuminate\Database\Migrations\Migration;
 use Illuminate\Database\Schema\Blueprint;
+use Illuminate\Support\Facades\DB;
 use Illuminate\Support\Facades\Schema;
 
 return new class extends Migration
@@ -18,14 +19,23 @@ return new class extends Migration
             $table->timestamps();
         });
 
+        Schema::create('manufacturers', function (Blueprint $table): void {
+            $table->id();
+            $table->string('name');
+            $table->string('logo')->nullable(); // путь на диске public (manufacturers/...)
+            $table->timestamps();
+        });
+
         // Справочник характеристик ("плотность", "влагостойкость", ...)
         Schema::create('attributes', function (Blueprint $table): void {
             $table->id();
-            $table->string('name');
+            $table->string('name', 80);
             $table->string('slug')->unique();
             $table->timestamps();
         });
 
+        // Порядок колонок повторяет живую БД, чтобы migrate:fresh давал схему,
+        // идентичную дампу pptbel_public.sql.
         Schema::create('products', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('category_id')->nullable()->constrained()->nullOnDelete();
@@ -36,22 +46,45 @@ return new class extends Migration
             $table->unsignedInteger('price')->default(0);
             $table->unsignedInteger('discount_price')->nullable();
             $table->string('price_unit')->default('куб');
+            // Объёмные тарифы: low/medium обязательны, high опционален; пояснения — свободный текст
             $table->boolean('is_volume_price')->default(false);
-            $table->unsignedInteger('volume_price_before_10')->nullable();
-            $table->unsignedInteger('volume_price_10_to_20')->nullable();
-            $table->unsignedInteger('volume_price_after_20')->nullable();
-            $table->string('template')->nullable();
+            $table->unsignedInteger('volume_price_low')->nullable();
+            $table->unsignedInteger('volume_price_medium')->nullable();
+            $table->unsignedInteger('volume_price_high')->nullable();
             $table->string('image')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
+            $table->string('volume_price_low_label')->nullable();
+            $table->string('volume_price_medium_label')->nullable();
+            $table->string('volume_price_high_label')->nullable();
+            $table->foreignId('manufacturer_id')->nullable()->constrained()->nullOnDelete();
+            // «Показывать в популярных» — блок на главной, максимум 8 товаров (Product::booted())
+            $table->boolean('is_featured')->default(false);
         });
+
+        // Режимы цены взаимоисключающие, дублирует Product::booted() на уровне БД
+        DB::statement(<<<'SQL'
+            ALTER TABLE products ADD CONSTRAINT products_price_mode_check CHECK (
+                (
+                    is_volume_price
+                    AND discount_price IS NULL
+                    AND volume_price_low IS NOT NULL
+                    AND volume_price_medium IS NOT NULL
+                ) OR (
+                    NOT is_volume_price
+                    AND volume_price_low IS NULL
+                    AND volume_price_medium IS NULL
+                    AND volume_price_high IS NULL
+                )
+            )
+        SQL);
 
         // Значение характеристики у конкретного товара
         Schema::create('attribute_product', function (Blueprint $table): void {
             $table->id();
             $table->foreignId('product_id')->constrained()->cascadeOnDelete();
             $table->foreignId('attribute_id')->constrained()->cascadeOnDelete();
-            $table->string('value');
+            $table->string('value', 20);
             $table->unsignedSmallInteger('position')->default(0);
             $table->unique(['product_id', 'attribute_id']);
         });
@@ -69,6 +102,7 @@ return new class extends Migration
         Schema::dropIfExists('attribute_product');
         Schema::dropIfExists('products');
         Schema::dropIfExists('attributes');
+        Schema::dropIfExists('manufacturers');
         Schema::dropIfExists('categories');
     }
 };

@@ -23,11 +23,13 @@ COPY --from=vendor /app ./
 RUN mkdir -p storage/framework/cache/data storage/framework/sessions storage/framework/views storage/logs bootstrap/cache \
     && chown -R www-data:www-data storage bootstrap/cache
 
-# On every container start: wipe ALL Laravel caches (config/routes/views/events/app cache),
-# then rebuild them for production before serving. storage:link exposes admin uploads
-# (storage/app/public, persisted via compose volume) at public/storage.
+# This CMD runs as root, so files it creates (compiled views, etc.) end up root-owned —
+# chown before serving, or Apache's www-data workers get "touch(): Operation not permitted"
+# recompiling any view not covered by the ahead-of-time view:cache (e.g. Livewire relation
+# manager views), which Livewire swallows as a silently-blank nested component.
 CMD php artisan optimize:clear \
     && php artisan optimize \
     && php artisan filament:optimize \
     && php artisan storage:link --force \
+    && chown -R www-data:www-data storage bootstrap/cache \
     && apache2-foreground

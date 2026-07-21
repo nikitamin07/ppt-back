@@ -19,6 +19,8 @@ return new class extends Migration
             $table->string('password');
             $table->rememberToken();
             $table->timestamps();
+            // admin управляет пользователями, manager — только контентом (User::isAdmin()).
+            $table->string('role')->default('manager');
         });
 
         Schema::create('password_reset_tokens', function (Blueprint $table) {
