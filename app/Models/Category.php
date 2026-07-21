@@ -15,7 +15,20 @@ final class Category extends Model
 {
     use HasFactory;
 
-    protected $fillable = ['parent_id', 'name', 'slug', 'description', 'meta_description', 'position'];
+    protected $fillable = ['parent_id', 'name', 'slug', 'description', 'meta_description', 'position', 'show_calculator'];
+
+    protected function casts(): array
+    {
+        return ['show_calculator' => 'boolean'];
+    }
+
+    /** Флаг живёт на корневой категории — подкатегория берёт его у родителя. */
+    public function showsCalculator(): bool
+    {
+        return $this->parent_id === null
+            ? $this->show_calculator
+            : (bool) ($this->parent?->show_calculator ?? true);
+    }
 
     protected static function booted(): void
     {

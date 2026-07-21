@@ -91,10 +91,23 @@ class ProductForm
                     ->label('Цена за большой объем (High volume price)')
                     ->visible(self::inVolumeMode()),
                 self::volumeLabel('volume_price_high_label', 'например: от 20 кубов'),
-                TextInput::make('price_unit')
+                Select::make('price_unit')
                     ->label('Единица измерения')
+                    ->options(Product::PRICE_UNITS)
                     ->required()
-                    ->default('куб'),
+                    ->default('куб')
+                    ->selectablePlaceholder(false)
+                    ->live(),
+                // Товар продаётся не кубами, но калькулятор в категории включён —
+                // без этого коэффициента посчитать объём нечем
+                TextInput::make('cubes_per_pack')
+                    ->label('Кубов в упаковке (для калькулятора)')
+                    ->helperText('Сколько кубометров в одной единице товара, например 0,288.')
+                    ->numeric()
+                    ->minValue(0)
+                    ->step(0.0001)
+                    ->visible(fn (Get $get): bool => self::needsCubesPerPack($get('price_unit'), $get('root_category')))
+                    ->dehydratedWhenHidden(false),
                 FileUpload::make('image')
                     ->label('Изображение')
                     ->image()
@@ -115,6 +128,16 @@ class ProductForm
                     ->default(true)
                     ->columnSpanFull(),
             ]);
+    }
+
+    /** Единица не «куб», а калькулятор у корневой категории включён: нужен коэффициент пересчёта. */
+    private static function needsCubesPerPack(?string $priceUnit, mixed $rootCategoryId): bool
+    {
+        if ($priceUnit === 'куб' || blank($rootCategoryId)) {
+            return false;
+        }
+
+        return (bool) Category::whereKey($rootCategoryId)->value('show_calculator');
     }
 
     /** Включён ли режим объёмных цен — от него зависит видимость всего ценового блока. */

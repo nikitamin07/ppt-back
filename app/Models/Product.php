@@ -21,11 +21,14 @@ final class Product extends Model
         'is_volume_price',
         'volume_price_low', 'volume_price_medium', 'volume_price_high',
         'volume_price_low_label', 'volume_price_medium_label', 'volume_price_high_label',
-        'image', 'is_active', 'is_featured',
+        'image', 'is_active', 'is_featured', 'cubes_per_pack',
     ];
 
     /** Максимум товаров в блоке «Популярные» (одна страница, без пагинации). */
     public const FEATURED_LIMIT = 8;
+
+    /** Допустимые единицы измерения цены; дублируется CHECK-констрейнтом products_price_unit_check. */
+    public const PRICE_UNITS = ['куб' => 'куб', 'уп.' => 'уп.', 'шт.' => 'шт.'];
 
     protected function casts(): array
     {
@@ -33,6 +36,7 @@ final class Product extends Model
             'is_volume_price' => 'boolean',
             'is_active' => 'boolean',
             'is_featured' => 'boolean',
+            'cubes_per_pack' => 'float',
         ];
     }
 
@@ -49,6 +53,13 @@ final class Product extends Model
                 throw ValidationException::withMessages([
                     'is_featured' => 'Максимум популярных товаров: '.self::FEATURED_LIMIT,
                 ]);
+            }
+        });
+
+        // Кубы в упаковке нужны, только когда товар продаётся не кубами.
+        self::saving(function (self $product): void {
+            if ($product->price_unit === 'куб') {
+                $product->cubes_per_pack = null;
             }
         });
 
@@ -71,6 +82,19 @@ final class Product extends Model
                 $product->volume_price_high_label = null;
             }
         });
+    }
+
+    /**
+     * Показывать ли калькулятор объёма: калькулятор включён у корневой категории
+     * И объём вообще есть чем посчитать — либо цена уже за куб, либо задан cubes_per_pack.
+     */
+    public function isCalculative(): bool
+    {
+        if (! ($this->category?->showsCalculator() ?? false)) {
+            return false;
+        }
+
+        return $this->price_unit === 'куб' || $this->cubes_per_pack !== null;
     }
 
     public function category(): BelongsTo

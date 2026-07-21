@@ -14,6 +14,10 @@ final class ProductResource extends ProductListResource
         return [
             ...parent::toArray($request),
             'description' => (string) $this->description,
+            // Показывать ли калькулятор объёма (см. Product::isCalculative)
+            'isCalculative' => $this->resource->isCalculative(),
+            // Кубов в одной уп./шт.; null, когда цена и так за куб
+            'cubes_per_pack' => $this->cubes_per_pack,
             'attributes' => $this->whenLoaded(
                 'attributes',
                 fn () => $this->attributes->map(fn ($attribute) => [

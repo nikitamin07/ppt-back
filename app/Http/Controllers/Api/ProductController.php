@@ -116,7 +116,8 @@ final class ProductController extends Controller
         $product = Product::active()
             ->where('slug', $productSlug)
             ->whereRelation('category', 'slug', $categorySlug)
-            ->with([...self::CARD_RELATIONS, 'attributes', 'related'])
+            // category.parent — для isCalculative: флаг калькулятора лежит на корневой категории
+            ->with([...self::CARD_RELATIONS, 'category.parent', 'attributes', 'related'])
             ->firstOrFail();
 
         return new ProductResource($product);
