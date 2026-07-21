@@ -19,8 +19,8 @@ final class ProductController extends Controller
 {
     private const PER_PAGE = 8;
 
-    /** Связи, из которых ProductListResource собирает карточку. */
-    private const CARD_RELATIONS = ['category', 'manufacturer'];
+    /** Связи, из которых ProductListResource собирает карточку. parent — для category_path. */
+    private const CARD_RELATIONS = ['category.parent', 'manufacturer'];
 
     /** Скидка, если есть; у тарифных товаров price уже равен самому дешёвому тарифу. */
     private const EFFECTIVE_PRICE = 'COALESCE(discount_price, price)';
@@ -115,8 +115,8 @@ final class ProductController extends Controller
         $product = Product::active()
             ->where('slug', $productSlug)
             ->whereRelation('category', 'slug', $categorySlug)
-            // category.parent — для isCalculative: флаг калькулятора лежит на корневой категории
-            ->with([...self::CARD_RELATIONS, 'category.parent', 'attributes', 'related'])
+            // category.parent (в CARD_RELATIONS) нужен и isCalculative: флаг лежит на корневой категории
+            ->with([...self::CARD_RELATIONS, 'attributes', 'related'])
             ->firstOrFail();
 
         return new ProductResource($product);

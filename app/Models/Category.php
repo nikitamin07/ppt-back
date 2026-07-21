@@ -22,6 +22,12 @@ final class Category extends Model
         return ['show_calculator' => 'boolean'];
     }
 
+    /** Сегменты адреса: «penoplast» у корневой, «penoplast/ppt» у подкатегории. */
+    public function path(): string
+    {
+        return $this->parent === null ? $this->slug : $this->parent->slug.'/'.$this->slug;
+    }
+
     /** Флаг живёт на корневой категории — подкатегория берёт его у родителя. */
     public function showsCalculator(): bool
     {

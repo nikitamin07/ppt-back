@@ -24,8 +24,10 @@ class ProductListResource extends JsonResource
         return [
             'id' => $this->id,
             'category_id' => $this->category_id,
-            // Слаг прямой категории — фронт строит из него адрес /catalog/{category_slug}/{slug}
+            // Слаг прямой категории — корневой или подкатегории
             'category_slug' => $this->whenLoaded('category', fn () => $this->category?->slug, null),
+            // Путь категории: фронт строит адрес /catalog/{category_path}/{slug}
+            'category_path' => $this->whenLoaded('category', fn () => $this->category?->path(), null),
             'slug' => $this->slug,
             'name' => $this->name,
             'price' => $this->price / 100,

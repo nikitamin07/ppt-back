@@ -17,6 +17,11 @@ return new class extends Migration
             $table->string('slug')->unique();
             $table->text('description')->nullable();
             $table->timestamps();
+            // Порядок корневых категорий: перетаскивание в админке, им же сортирует GET /api/categories
+            $table->unsignedSmallInteger('position')->default(0);
+            $table->string('meta_description')->nullable();
+            // «Выводить калькулятор» — настройка корневой категории, подкатегории наследуют
+            $table->boolean('show_calculator')->default(true);
         });
 
         Schema::create('manufacturers', function (Blueprint $table): void {
@@ -51,7 +56,6 @@ return new class extends Migration
             $table->unsignedInteger('volume_price_low')->nullable();
             $table->unsignedInteger('volume_price_medium')->nullable();
             $table->unsignedInteger('volume_price_high')->nullable();
-            $table->string('image')->nullable();
             $table->boolean('is_active')->default(true);
             $table->timestamps();
             $table->string('volume_price_low_label')->nullable();
@@ -60,6 +64,13 @@ return new class extends Migration
             $table->foreignId('manufacturer_id')->nullable()->constrained()->nullOnDelete();
             // «Показывать в популярных» — блок на главной, максимум 8 товаров (Product::booted())
             $table->boolean('is_featured')->default(false);
+            $table->string('meta_description')->nullable();
+            // Кубов в одной уп./шт. — коэффициент для калькулятора объёма
+            $table->decimal('cubes_per_pack', 8, 4)->nullable();
+            // Галерея: пути на диске public в порядке из админки, image_url — первый элемент
+            $table->json('images')->nullable();
+            // Порядок товара в блоке «Популярные»; null у непопулярных (Product::booted())
+            $table->unsignedSmallInteger('featured_position')->nullable();
         });
 
         // Режимы цены взаимоисключающие, дублирует Product::booted() на уровне БД
@@ -78,6 +89,9 @@ return new class extends Migration
                 )
             )
         SQL);
+
+        // Единица измерения цены — только эти три, дублирует Select в админке
+        DB::statement("ALTER TABLE products ADD CONSTRAINT products_price_unit_check CHECK (price_unit IN ('куб', 'уп.', 'шт.'))");
 
         // Значение характеристики у конкретного товара
         Schema::create('attribute_product', function (Blueprint $table): void {
