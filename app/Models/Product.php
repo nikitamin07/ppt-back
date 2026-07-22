@@ -9,6 +9,8 @@ use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\BelongsToMany;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Support\Str;
 use Illuminate\Validation\ValidationException;
 
 final class Product extends Model
@@ -110,6 +112,9 @@ final class Product extends Model
     /** Толщина по умолчанию, когда у товара её нет, а калькулятору нужно с чего-то начать. */
     public const DEFAULT_THICKNESS = 30;
 
+    /** Характеристика, из которой калькулятор берёт толщину. */
+    public const THICKNESS_ATTRIBUTE = 'Толщина';
+
     /**
      * Толщина в мм для предзаполнения калькулятора: из характеристики «Толщина»,
      * иначе дефолт. null там, где калькулятора нет вовсе — считать нечего.
@@ -121,9 +126,62 @@ final class Product extends Model
         }
 
         // getRelationValue, а не $this->attributes: внутри модели это поле Eloquent, а не связь
-        $value = $this->getRelationValue('attributes')?->firstWhere('name', 'Толщина')?->pivot->value;
+        $value = $this->getRelationValue('attributes')?->firstWhere('name', self::THICKNESS_ATTRIBUTE)?->pivot->value;
 
         return $value !== null && preg_match('/\d+/', $value, $m) ? (int) $m[0] : self::DEFAULT_THICKNESS;
+    }
+
+    /**
+     * Копия товара под другую толщину: число уходит в название, слаг и характеристику
+     * «Толщина» — из неё же калькулятор берёт свою толщину, отдельного поля нет.
+     */
+    public function duplicateWithThickness(int $mm): self
+    {
+        $copy = $this->replicate();
+        $copy->name = self::nameWithThickness($this->name, $mm);
+        $copy->slug = self::uniqueSlug($copy->name);
+        $copy->is_featured = false;
+        $copy->save();
+
+        $value = $mm.' мм';
+        $thicknessId = Attribute::firstOrCreate(['name' => self::THICKNESS_ATTRIBUTE])->getKey();
+
+        // Заготовка на случай, когда у исходника «Толщины» нет: встанет в конец списка
+        $pivot = [$thicknessId => [
+            'value' => $value,
+            'position' => (int) $this->attributes()->max('attribute_product.position') + 1,
+        ]];
+
+        foreach ($this->attributes()->get() as $attribute) {
+            $pivot[$attribute->getKey()] = [
+                'value' => $attribute->getKey() === $thicknessId ? $value : $attribute->pivot->value,
+                'position' => $attribute->pivot->position,
+            ];
+        }
+
+        $copy->attributes()->attach($pivot);
+
+        return $copy;
+    }
+
+    /** «Плита ППТ 30 мм, 13 шт» → «Плита ППТ 50 мм, 13 шт»; нет толщины в названии — дописываем в конец. */
+    private static function nameWithThickness(string $name, int $mm): string
+    {
+        $replaced = preg_replace('/\d+\s*мм/u', $mm.' мм', $name, 1, $count);
+
+        return $count ? $replaced : $name.' '.$mm.' мм';
+    }
+
+    /** Слаг уникален в БД: товар такой толщины мог уже существовать — добавляем номер. */
+    private static function uniqueSlug(string $name): string
+    {
+        $slug = $base = Str::slug($name);
+
+        for ($i = 2; self::where('slug', $slug)->exists(); $i++) {
+            $slug = $base.'-'.$i;
+        }
+
+        return $slug;
     }
 
     public function category(): BelongsTo
@@ -141,6 +199,11 @@ final class Product extends Model
         return $this->belongsToMany(Attribute::class)
             ->withPivot(['value', 'position'])
             ->orderByPivot('position');
+    }
+
+    public function comments(): HasMany
+    {
+        return $this->hasMany(Comment::class);
     }
 
     public function related(): BelongsToMany

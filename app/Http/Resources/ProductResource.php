@@ -37,6 +37,8 @@ final class ProductResource extends ProductListResource
                 fn () => $this->related->pluck('id'),
                 [],
             ),
+            // Только одобренные, новые сверху — фильтр и порядок задаёт ProductController
+            'comments' => CommentResource::collection($this->whenLoaded('comments')),
         ];
     }
 }

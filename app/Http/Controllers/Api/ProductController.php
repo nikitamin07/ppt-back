@@ -117,6 +117,8 @@ final class ProductController extends Controller
             ->whereRelation('category', 'slug', $categorySlug)
             // category.parent (в CARD_RELATIONS) нужен и isCalculative: флаг лежит на корневой категории
             ->with([...self::CARD_RELATIONS, 'attributes', 'related'])
+            // Непрошедшие модерацию отзывы наружу не уходят
+            ->with(['comments' => fn ($query) => $query->approved()->latest()])
             ->firstOrFail();
 
         return new ProductResource($product);
