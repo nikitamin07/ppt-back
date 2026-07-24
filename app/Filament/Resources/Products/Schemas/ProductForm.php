@@ -26,10 +26,10 @@ class ProductForm
                 self::titleField('name', 'Название'),
                 self::slugField(),
                 // Двухступенчатый выбор: сначала корневая категория, затем (если есть) её подкатегория.
-                // В category_id сохраняется подкатегория, а если она не выбрана — сама корневая.
                 Select::make('root_category')
                     ->label('Категория')
                     ->options(fn () => Category::whereNull('parent_id')->orderBy('id')->pluck('name', 'id'))
+                    ->required()
                     ->dehydrated(false)
                     ->live()
                     ->afterStateHydrated(function (Select $component, ?Product $record): void {
@@ -40,17 +40,10 @@ class ProductForm
                 Select::make('category_id')
                     ->label('Подкатегория')
                     ->options(fn (Get $get) => Category::where('parent_id', $get('root_category'))->orderBy('id')->pluck('name', 'id'))
-                    ->visible(fn (Get $get): bool => filled($get('root_category'))
-                        && Category::where('parent_id', $get('root_category'))->exists())
-                    // Товар, висящий прямо на корне: подкатегория в форме пустая
-                    ->afterStateHydrated(function (Select $component, ?Product $record): void {
-                        if ($record?->category !== null && $record->category->parent_id === null) {
-                            $component->state(null);
-                        }
-                    })
-                    // Не выбрана подкатегория (или поле скрыто — у корня нет детей) — сохраняем корневую
-                    ->dehydratedWhenHidden()
-                    ->dehydrateStateUsing(fn ($state, Get $get) => $state ?? $get('root_category')),
+                    ->required()
+                    // У корня нет подкатегорий — сохранить товар нельзя, сначала заводится подкатегория
+                    ->helperText('Товар относится только к подкатегории. Если список пуст — создайте подкатегорию в разделе «Категории».')
+                    ->visible(fn (Get $get): bool => filled($get('root_category'))),
                 Select::make('manufacturer_id')
                     ->label('Производитель')
                     ->relationship('manufacturer', 'name')

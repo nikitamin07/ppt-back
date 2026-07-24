@@ -2,6 +2,7 @@
 
 use App\Http\Controllers\Api\CallbackController;
 use App\Http\Controllers\Api\CategoryController;
+use App\Http\Controllers\Api\CommentController;
 use App\Http\Controllers\Api\ManufacturerController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProductController;
@@ -34,6 +35,9 @@ Route::middleware('throttle:60,1')->group(function (): void {
     // самих значений лимита, так что без префикса этот лимит делил бы счётчик с общим throttle:60,1
     // группы (тот же ключ) и удваивал бы инкремент на каждый запрос к /callback.
     Route::post('/callback', [CallbackController::class, 'store'])->middleware('throttle:10,1,callback');
+    
+    // Свой префикс ключа по той же причине
+    Route::post('/comments', [CommentController::class, 'store'])->middleware('throttle:5,1,comments');
 
     Route::post('/track-visit', [SiteVisitController::class, 'store']);
 });
