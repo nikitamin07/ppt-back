@@ -3,13 +3,13 @@
 namespace App\Filament\Resources\Comments\Tables;
 
 use App\Models\Comment;
-use Filament\Actions\Action;
 use Filament\Actions\BulkAction;
 use Filament\Actions\BulkActionGroup;
 use Filament\Actions\DeleteBulkAction;
 use Filament\Actions\EditAction;
 use Filament\Support\Icons\Heroicon;
 use Filament\Tables\Columns\TextColumn;
+use Filament\Tables\Columns\ToggleColumn;
 use Filament\Tables\Filters\SelectFilter;
 use Filament\Tables\Table;
 use Illuminate\Database\Eloquent\Collection;
@@ -42,6 +42,10 @@ class CommentsTable
                     ->label('Текст')
                     ->limit(90)
                     ->wrap(),
+                // Свитчер модерации: переключает публикацию отзыва прямо в таблице
+                ToggleColumn::make('is_approved')
+                    ->label('Опубликован')
+                    ->sortable(),
             ])
             ->filters([
                 SelectFilter::make('product_id')
@@ -54,35 +58,26 @@ class CommentsTable
                     ->options([5 => '5', 4 => '4', 3 => '3', 2 => '2', 1 => '1']),
             ])
             ->recordActions([
-                self::toggleApprovedAction(),
                 EditAction::make(),
             ])
             ->toolbarActions([
                 BulkActionGroup::make([
-                    self::approveBulkAction(),
+                    self::setApprovedBulkAction('approve', 'Опубликовать', true, Heroicon::OutlinedCheck, 'success'),
+                    self::setApprovedBulkAction('unapprove', 'Снять с публикации', false, Heroicon::OutlinedEyeSlash, 'gray'),
                     DeleteBulkAction::make(),
                 ]),
             ]);
     }
 
-    /** Основное действие модерации: одной кнопкой пустить отзыв на сайт или снять с него. */
-    private static function toggleApprovedAction(): Action
+    /** Массовая смена статуса модерации: и «Опубликовать», и «Снять с публикации». */
+    private static function setApprovedBulkAction(string $name, string $label, bool $approved, Heroicon $icon, string $color): BulkAction
     {
-        return Action::make('toggleApproved')
-            ->label(fn (Comment $record): string => $record->is_approved ? 'Снять с публикации' : 'Опубликовать')
-            ->icon(fn (Comment $record): Heroicon => $record->is_approved ? Heroicon::OutlinedEyeSlash : Heroicon::OutlinedCheck)
-            ->color(fn (Comment $record): string => $record->is_approved ? 'gray' : 'success')
-            ->action(fn (Comment $record) => $record->update(['is_approved' => ! $record->is_approved]));
-    }
-
-    private static function approveBulkAction(): BulkAction
-    {
-        return BulkAction::make('approve')
-            ->label('Опубликовать')
-            ->icon(Heroicon::OutlinedCheck)
-            ->color('success')
+        return BulkAction::make($name)
+            ->label($label)
+            ->icon($icon)
+            ->color($color)
             ->requiresConfirmation()
             ->deselectRecordsAfterCompletion()
-            ->action(fn (Collection $records) => Comment::whereKey($records->modelKeys())->update(['is_approved' => true]));
+            ->action(fn (Collection $records) => Comment::whereKey($records->modelKeys())->update(['is_approved' => $approved]));
     }
 }
