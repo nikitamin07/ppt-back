@@ -11,7 +11,9 @@ RUN composer dump-autoload --optimize --no-dev
 FROM php:8.4-apache
 RUN apt-get update \
     && apt-get install -y --no-install-recommends libicu-dev libpq-dev libzip-dev \
-    && docker-php-ext-install intl pdo_pgsql opcache zip \
+       libpng-dev libjpeg-dev libfreetype-dev libwebp-dev \
+    && docker-php-ext-configure gd --with-freetype --with-jpeg --with-webp \
+    && docker-php-ext-install intl pdo_pgsql opcache zip gd exif \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 

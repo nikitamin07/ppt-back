@@ -3,6 +3,8 @@
 namespace App\Filament\Resources\Posts\Schemas;
 
 use App\Filament\Resources\Concerns\SlugFields;
+use App\Services\ImageOptimizer;
+use Illuminate\Http\UploadedFile;
 use Filament\Forms\Components\DateTimePicker;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
@@ -36,7 +38,8 @@ class PostForm
                     ->label('Обложка')
                     ->image()
                     ->disk('public')
-                    ->directory('posts'),
+                    ->directory('posts')
+                    ->saveUploadedFileUsing(fn (UploadedFile $file) => ImageOptimizer::storeWebp($file, 'posts', 1600)),
                 DateTimePicker::make('published_at')
                     ->label('Дата публикации'),
             ]);

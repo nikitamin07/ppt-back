@@ -2,6 +2,8 @@
 
 namespace App\Filament\Resources\Manufacturers\Schemas;
 
+use App\Services\ImageOptimizer;
+use Illuminate\Http\UploadedFile;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\TextInput;
 use Filament\Schemas\Schema;
@@ -20,7 +22,8 @@ class ManufacturerForm
                     ->label('Логотип')
                     ->image()
                     ->disk('public')
-                    ->directory('manufacturers'),
+                    ->directory('manufacturers')
+                    ->saveUploadedFileUsing(fn (UploadedFile $file) => ImageOptimizer::storeWebp($file, 'manufacturers', 400)),
             ]);
     }
 }

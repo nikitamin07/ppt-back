@@ -6,6 +6,8 @@ use App\Filament\Resources\Concerns\SlugFields;
 use App\Models\Category;
 use App\Models\Product;
 use Closure;
+use App\Services\ImageOptimizer;
+use Illuminate\Http\UploadedFile;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\Select;
 use Filament\Forms\Components\Textarea;
@@ -112,6 +114,7 @@ class ProductForm
                     ->appendFiles()
                     ->disk('public')
                     ->directory('products')
+                    ->saveUploadedFileUsing(fn (UploadedFile $file) => ImageOptimizer::storeWebp($file, 'products', 1600))
                     ->columnSpanFull(),
                 Toggle::make('is_active')
                     ->label('Активен (показывать на сайте)')
