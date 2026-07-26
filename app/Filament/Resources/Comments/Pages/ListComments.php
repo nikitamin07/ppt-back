@@ -20,17 +20,16 @@ class ListComments extends ListRecords
         ];
     }
 
-    /** Очередь модерации открывается первой: новые отзывы с сайта попадают именно сюда. Публикацию делает свитчер в строке. */
     public function getTabs(): array
     {
         $pending = Comment::where('is_approved', false)->count();
 
         return [
+            'all' => Tab::make('Все'),
             'pending' => Tab::make('На модерации')
                 ->badge($pending)
                 ->badgeColor($pending > 0 ? 'warning' : 'gray')
                 ->modifyQueryUsing(fn (Builder $query): Builder => $query->where('is_approved', false)),
-            'all' => Tab::make('Все'),
         ];
     }
 }

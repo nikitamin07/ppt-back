@@ -10,8 +10,8 @@ RUN composer dump-autoload --optimize --no-dev
 
 FROM php:8.4-apache
 RUN apt-get update \
-    && apt-get install -y --no-install-recommends libicu-dev libpq-dev \
-    && docker-php-ext-install intl pdo_pgsql opcache \
+    && apt-get install -y --no-install-recommends libicu-dev libpq-dev libzip-dev \
+    && docker-php-ext-install intl pdo_pgsql opcache zip \
     && a2enmod rewrite \
     && rm -rf /var/lib/apt/lists/*
 
