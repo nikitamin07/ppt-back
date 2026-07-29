@@ -4,6 +4,7 @@ namespace App\Filament\Pages;
 
 use App\Services\PriceSheet;
 use BackedEnum;
+use UnitEnum;
 use Filament\Forms\Components\FileUpload;
 use Filament\Notifications\Notification;
 use Filament\Pages\Page;
@@ -20,6 +21,8 @@ class PriceImportExport extends Page
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedArrowsRightLeft;
 
     protected static ?string $navigationLabel = 'Импорт/экспорт цен';
+    
+    protected static string|UnitEnum|null $navigationGroup = 'Администрирование';
 
     protected static ?string $title = 'Импорт/экспорт цен';
 

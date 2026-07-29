@@ -6,12 +6,15 @@ use App\Filament\Pages\Statistics\AllCallbackRequestsTable;
 use App\Filament\Widgets\SiteVisitsChart;
 use App\Models\CallbackRequest;
 use BackedEnum;
+use UnitEnum;
 use Filament\Pages\Page;
 use Filament\Support\Icons\Heroicon;
 
 class Statistics extends Page
 {
     protected static string|BackedEnum|null $navigationIcon = Heroicon::OutlinedChartBar;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Администрирование';
 
     protected static ?string $navigationLabel = 'Заявки и статистика';
 

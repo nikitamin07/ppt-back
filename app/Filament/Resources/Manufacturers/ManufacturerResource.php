@@ -9,6 +9,7 @@ use App\Filament\Resources\Manufacturers\Schemas\ManufacturerForm;
 use App\Filament\Resources\Manufacturers\Tables\ManufacturersTable;
 use App\Models\Manufacturer;
 use BackedEnum;
+use UnitEnum;
 use Filament\Resources\Resource;
 use Filament\Schemas\Schema;
 use Filament\Support\Icons\Heroicon;
@@ -17,6 +18,8 @@ use Filament\Tables\Table;
 class ManufacturerResource extends Resource
 {
     protected static ?string $model = Manufacturer::class;
+
+    protected static string|UnitEnum|null $navigationGroup = 'Каталог';
 
     protected static ?string $modelLabel = 'производитель';
 

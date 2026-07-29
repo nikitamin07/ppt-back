@@ -3,6 +3,7 @@
 use App\Http\Controllers\Api\CallbackController;
 use App\Http\Controllers\Api\CategoryController;
 use App\Http\Controllers\Api\CommentController;
+use App\Http\Controllers\Api\MailingWebhookController;
 use App\Http\Controllers\Api\ManufacturerController;
 use App\Http\Controllers\Api\PostController;
 use App\Http\Controllers\Api\ProductController;
@@ -40,3 +41,7 @@ Route::middleware('throttle:60,1')->group(function (): void {
 
     Route::post('/track-visit', [SiteVisitController::class, 'store']);
 });
+
+// Webhook доставки ESP: свой лимит, защита — секрет в URL
+Route::post('/mailing/webhook/{secret}', MailingWebhookController::class)
+    ->middleware('throttle:300,1,mailingwebhook');
