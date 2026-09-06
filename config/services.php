@@ -36,9 +36,7 @@ return [
     ],
 
     'telegram' => [
-        // Формат "bot<token>" — так его ждёт api.telegram.org/{bot}/sendMessage (см. TelegramNotifier)
         'bot' => env('TELEGRAM_API'),
-        // chat_id через запятую — сообщение уходит в каждый
         'chats' => env('TELEGRAM_CHATS'),
     ],
 
