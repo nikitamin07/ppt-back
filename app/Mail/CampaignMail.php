@@ -35,8 +35,20 @@ final class CampaignMail extends Mailable
     {
         return new Content(
             view: 'emails.campaign',
-            with: ['body' => $this->bodyHtml],
+            text: 'emails.campaign_text',
+            with: [
+                'body' => $this->bodyHtml,
+                'textBody' => $this->toPlainText($this->bodyHtml),
+            ],
         );
+    }
+
+    /** Грубая HTML→текст конвертация для plain-text альтернативы письма */
+    private function toPlainText(string $html): string
+    {
+        $normalized = preg_replace('#<(br|/p|/div|/li)\s*/?>#i', "\n", $html);
+
+        return trim(html_entity_decode(strip_tags($normalized), ENT_QUOTES, 'UTF-8'));
     }
 
     /**

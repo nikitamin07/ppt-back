@@ -32,6 +32,8 @@ class MailingForm
                     ->multiple()
                     ->disk('local')
                     ->directory('mailing-attachments')
+                    // Иначе Filament хранит под случайным ULID-именем — получатель видит его как имя вложения
+                    ->preserveFilenames()
                     ->downloadable()
                     ->openable()
                     ->reorderable()

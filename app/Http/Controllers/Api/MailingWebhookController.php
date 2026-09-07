@@ -16,14 +16,12 @@ final class MailingWebhookController extends Controller
     /** Событие ESP → статус доставки */
     private const STATUS_MAP = [
         'delivered' => 'delivered',
-        // отскоки
         'hard_bounce' => 'bounced',
         'soft_bounce' => 'bounced',
         'bounce' => 'bounced',
         'block' => 'bounced',
         'blocked' => 'bounced',
         'invalid_email' => 'bounced',
-        // жалобы на спам
         'spam' => 'complained',
         'spam_complaint' => 'complained',
         'complaint' => 'complained',
@@ -64,7 +62,7 @@ final class MailingWebhookController extends Controller
         $type = strtolower((string) ($event['event'] ?? ''));
         $status = self::STATUS_MAP[$type] ?? null;
         $email = (string) ($event['email'] ?? '');
-        // Снимаем угловые скобки Message-ID
+
         $messageId = trim((string) ($event['message-id'] ?? $event['message_id'] ?? ''), " <>");
 
         if ($status === null || ($email === '' && $messageId === '')) {
@@ -77,7 +75,6 @@ final class MailingWebhookController extends Controller
             ->latest('sent_at')
             ->first();
 
-        // Жалобу не перетираем — финальный статус
         if ($delivery && $delivery->status !== 'complained') {
             $delivery->update(['status' => $status]);
         }
