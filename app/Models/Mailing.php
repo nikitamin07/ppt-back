@@ -12,6 +12,7 @@ final class Mailing extends Model
     protected $fillable = [
         'subject', 'body', 'attachments', 'send_to_all', 'status',
         'total', 'sent_count', 'failed_count', 'started_at', 'finished_at',
+        'paused_by_window', 'window_override',
     ];
 
     protected function casts(): array
@@ -21,6 +22,8 @@ final class Mailing extends Model
             'send_to_all' => 'boolean',
             'started_at' => 'datetime',
             'finished_at' => 'datetime',
+            'paused_by_window' => 'boolean',
+            'window_override' => 'boolean',
         ];
     }
 
@@ -79,23 +82,51 @@ final class Mailing extends Model
         ];
     }
 
-    /** Приостановить рассылку */
+    public static function isSendingWindowOpen(): bool
+    {
+        $hour = now(config('mailing.timezone'))->hour;
+        $window = config('mailing.window');
+
+        return $hour >= (int) $window['start'] && $hour < (int) $window['end'];
+    }
+
+    public static function syncWindowState(bool $windowOpen): void
+    {
+        if ($windowOpen) {
+            static::query()
+                ->where('status', 'paused')
+                ->where('paused_by_window', true)
+                ->update(['status' => 'sending', 'paused_by_window' => false]);
+
+            static::query()->where('window_override', true)->update(['window_override' => false]);
+
+            return;
+        }
+
+        static::query()
+            ->where('status', 'sending')
+            ->where('window_override', false)
+            ->update(['status' => 'paused', 'paused_by_window' => true]);
+    }
+
     public function pause(): void
     {
         if ($this->status === 'sending') {
-            $this->update(['status' => 'paused']);
+            $this->update(['status' => 'paused', 'paused_by_window' => false, 'window_override' => false]);
         }
     }
 
-    /** Возобновить рассылку */
     public function resume(): void
     {
         if ($this->status === 'paused') {
-            $this->update(['status' => 'sending']);
+            $this->update([
+                'status' => 'sending',
+                'paused_by_window' => false,
+                'window_override' => ! self::isSendingWindowOpen(),
+            ]);
         }
     }
 
-    /** Вернуть неудачные в очередь; сколько вернулось */
     public function requeueFailed(): int
     {
         $count = $this->deliveries()->where('status', 'failed')->update([

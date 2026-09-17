@@ -6,6 +6,7 @@ use App\Filament\Resources\Mailings\Pages\CreateMailing;
 use App\Filament\Resources\Mailings\Pages\ListMailings;
 use App\Filament\Resources\Mailings\Pages\ViewMailing;
 use App\Filament\Resources\Mailings\RelationManagers\FailedDeliveriesRelationManager;
+use App\Filament\Resources\Mailings\RelationManagers\SentDeliveriesRelationManager;
 use App\Filament\Resources\Mailings\Schemas\MailingForm;
 use App\Filament\Resources\Mailings\Tables\MailingsTable;
 use App\Models\Mailing;
@@ -43,6 +44,7 @@ class MailingResource extends Resource
     public static function getRelations(): array
     {
         return [
+            SentDeliveriesRelationManager::class,
             FailedDeliveriesRelationManager::class,
         ];
     }

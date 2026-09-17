@@ -23,9 +23,8 @@ final class DispatchMailings extends Command
     {
         $config = config('mailing');
 
-        if (! $this->option('force') && ! $this->withinWindow($config)) {
-            return self::SUCCESS;
-        }
+        $this->finishCompleted();
+        Mailing::syncWindowState($this->option('force') || Mailing::isSendingWindowOpen());
 
         if ($this->tooSoon($config) || $this->dailyLimitReached($config)) {
             return self::SUCCESS;
@@ -108,14 +107,5 @@ final class DispatchMailings extends Command
             ->where('status', 'sending')
             ->whereDoesntHave('deliveries', fn (Builder $q) => $q->where('status', 'pending'))
             ->update(['status' => 'sent', 'finished_at' => now()]);
-    }
-
-    /** @param array<string, mixed> $config */
-    private function withinWindow(array $config): bool
-    {
-        $hour = now($config['timezone'])->hour;
-
-        return $hour >= (int) $config['window']['start']
-            && $hour < (int) $config['window']['end'];
     }
 }

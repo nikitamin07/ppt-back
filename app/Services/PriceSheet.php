@@ -10,28 +10,34 @@ use RuntimeException;
 use Throwable;
 
 /**
- * Экспорт/импорт цен товаров в XLSX. 7 столбцов: id, название и пять цен (рубли).
- * Импорт меняет только цены — id и название служат ориентиром и не трогаются.
+ * Экспорт/импорт цен товаров в XLSX. 5 столбцов: id, название, единица измерения и две цены (рубли).
+ * Импорт меняет только цены — id, название и единица измерения служат ориентиром и не трогаются.
+ * Товары с объёмными ценами в файл не попадают — их цены здесь не редактируются.
  */
 class PriceSheet
 {
     private const HEADER = [
-        'ID', 'Название', 'Обычная цена, руб', 'Цена со скидкой, руб',
-        'Объём: малый', 'Объём: средний', 'Объём: большой',
+        'ID', 'Название', 'Единицы измерения', 'Обычная цена, руб', 'Цена со скидкой, руб',
     ];
 
-    /** Записать все товары с текущими ценами в файл. */
+    private const COLUMN_WIDTHS = [1 => 8, 2 => 55, 3 => 20, 4 => 22, 5 => 22];
+
+    /** Записать активные товары без объёмных цен в файл. */
     public function write(string $path): void
     {
         $writer = new Writer();
+        foreach (self::COLUMN_WIDTHS as $column => $width) {
+            $writer->getOptions()->setColumnWidth((float) $width, $column);
+        }
         $writer->openToFile($path);
         $writer->addRow(Row::fromValues(self::HEADER));
 
         foreach (Product::orderBy('id')->get() as $p) {
-            $row = $p->is_volume_price
-                ? [$p->id, $p->name, '', '', self::rub($p->volume_price_low), self::rub($p->volume_price_medium), self::rub($p->volume_price_high)]
-                : [$p->id, $p->name, self::rub($p->price), self::rub($p->discount_price), '', '', ''];
-            $writer->addRow(Row::fromValues($row));
+            if ($p->is_volume_price) {
+                continue;
+            }
+
+            $writer->addRow(Row::fromValues([$p->id, $p->name, $p->price_unit, self::rub($p->price), self::rub($p->discount_price)]));
         }
 
         $writer->close();
@@ -100,33 +106,18 @@ class PriceSheet
         return ['applied' => $applied, 'skipped' => $skipped];
     }
 
-    /** Пять ценовых ячеек в копейки; null — пусто, исключение — мусор. */
+    /** Две ценовые ячейки в копейки; null — пусто, исключение — мусор. */
     private static function parseRow(array $cells): array
     {
         return [
-            'regular' => self::money($cells[2] ?? ''),
-            'discount' => self::money($cells[3] ?? ''),
-            'low' => self::money($cells[4] ?? ''),
-            'medium' => self::money($cells[5] ?? ''),
-            'high' => self::money($cells[6] ?? ''),
+            'regular' => self::money($cells[3] ?? ''),
+            'discount' => self::money($cells[4] ?? ''),
         ];
     }
 
     /** Причина отбраковки строки или null, если цены корректны. */
     private static function validate(array $v): ?string
     {
-        $hasVolume = $v['low'] !== null || $v['medium'] !== null || $v['high'] !== null;
-
-        if ($hasVolume && ($v['regular'] !== null || $v['discount'] !== null)) {
-            return 'указаны и объёмные цены, и обычная — неясно, какую ставить';
-        }
-
-        if ($hasVolume) {
-            return ($v['low'] === null || $v['medium'] === null)
-                ? 'для объёмных цен нужны малый и средний объём'
-                : null;
-        }
-
         if ($v['regular'] !== null) {
             return ($v['discount'] !== null && $v['discount'] >= $v['regular'])
                 ? 'цена со скидкой не меньше обычной'
@@ -141,16 +132,9 @@ class PriceSheet
     /** Разложить цены по полям; остальное досчитают хуки модели Product. */
     private static function apply(Product $product, array $v): void
     {
-        if ($v['low'] !== null || $v['medium'] !== null || $v['high'] !== null) {
-            $product->is_volume_price = true;
-            $product->volume_price_low = $v['low'];
-            $product->volume_price_medium = $v['medium'];
-            $product->volume_price_high = $v['high'];
-        } else {
-            $product->is_volume_price = false;
-            $product->price = $v['regular'];
-            $product->discount_price = $v['discount'];
-        }
+        $product->is_volume_price = false;
+        $product->price = $v['regular'];
+        $product->discount_price = $v['discount'];
     }
 
     /** Рубли (число или '') из копеек. */
