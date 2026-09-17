@@ -2,10 +2,9 @@
 
 namespace App\Filament\Resources\Mailings\Schemas;
 
-use App\Models\MailingRecipient;
 use Filament\Forms\Components\FileUpload;
 use Filament\Forms\Components\RichEditor;
-use Filament\Forms\Components\Select;
+use Filament\Forms\Components\TableSelect;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Get;
@@ -46,15 +45,11 @@ class MailingForm
                     ->default(true)
                     ->live()
                     ->columnSpanFull(),
-                Select::make('recipient_ids')
+                TableSelect::make('recipient_ids')
                     ->label('Выберите адреса')
                     ->multiple()
-                    ->searchable()
-                    // Серверный поиск: ~900 адресов не грузим
-                    ->getSearchResultsUsing(fn (string $search): array => MailingRecipient::query()->active()
-                        ->where('email', 'ilike', "%{$search}%")->orderBy('email')->limit(50)->pluck('email', 'id')->all())
-                    ->getOptionLabelsUsing(fn (array $values): array => MailingRecipient::query()
-                        ->whereIn('id', $values)->pluck('email', 'id')->all())
+                    // Таблица (галочка слева, поиск, по 25/стр.) вместо выпадающего списка — ~900 адресов страницами
+                    ->tableConfiguration(RecipientTableSelect::class)
                     ->visible(fn (Get $get): bool => ! $get('send_to_all'))
                     ->required(fn (Get $get): bool => ! $get('send_to_all'))
                     ->columnSpanFull(),
