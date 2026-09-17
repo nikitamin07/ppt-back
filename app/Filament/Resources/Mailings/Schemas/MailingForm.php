@@ -20,7 +20,7 @@ class MailingForm
                     ->label('Тема письма')
                     ->required()
                     ->maxLength(255)
-                    ->default('Коммерческое предложение на стройматериалы от 10.09.2026 - РешениеСтройДизайн')
+                    ->default('КП на строительные материалы для  отдела снабжения, закупок, ПТО от 10.09.2026 - РешениеСтройДизайн')
                     ->columnSpanFull(),
                 RichEditor::make('body')
                     ->label('Тело письма')
@@ -33,7 +33,6 @@ class MailingForm
                     ->multiple()
                     ->disk('local')
                     ->directory('mailing-attachments')
-                    // Иначе Filament хранит под случайным ULID-именем — получатель видит его как имя вложения
                     ->preserveFilenames()
                     ->downloadable()
                     ->openable()
@@ -48,7 +47,6 @@ class MailingForm
                 TableSelect::make('recipient_ids')
                     ->label('Выберите адреса')
                     ->multiple()
-                    // Таблица (галочка слева, поиск, по 25/стр.) вместо выпадающего списка — ~900 адресов страницами
                     ->tableConfiguration(RecipientTableSelect::class)
                     ->visible(fn (Get $get): bool => ! $get('send_to_all'))
                     ->required(fn (Get $get): bool => ! $get('send_to_all'))
