@@ -19,8 +19,6 @@ class User extends Authenticatable implements FilamentUser
     /** @use HasFactory<UserFactory> */
     use HasFactory, Notifiable;
 
-    // В таблице users живут только сотрудники: роли admin и manager.
-    // Обе роли работают в панели; управлять пользователями может только admin (см. UserPolicy).
     public function canAccessPanel(Panel $panel): bool
     {
         return true;

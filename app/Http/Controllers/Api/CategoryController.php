@@ -14,13 +14,18 @@ use Illuminate\Http\Resources\Json\AnonymousResourceCollection;
 
 final class CategoryController extends Controller
 {
-    /** Дерево: корневые категории с детьми, в порядке, заданном в админке. Без описаний — они нужны только на странице категории. */
+    /**
+     * Дерево: корневые категории с детьми, в порядке, заданном в админке. Без описаний — они нужны только
+     * на странице категории. Категория без активных товаров (и корень без видимых подкатегорий) на сайт не
+     * отдаётся — см. Category::isVisibleOnSite().
+     */
     public function index(): AnonymousResourceCollection
     {
         return CategoryListResource::collection(
             Category::query()
                 ->whereNull('parent_id')
-                ->with('children')
+                ->visible()
+                ->with(['children' => fn ($query) => $query->visible()])
                 ->orderBy('position')
                 ->orderBy('id')
                 ->get(),
@@ -29,7 +34,7 @@ final class CategoryController extends Controller
 
     public function count(): JsonResponse
     {
-        return response()->json(['count' => Category::count()]);
+        return response()->json(['count' => Category::visible()->count()]);
     }
 
     public function show(string $slug): CategoryResource
@@ -37,7 +42,8 @@ final class CategoryController extends Controller
         return new CategoryResource(
             Category::query()
                 ->where('slug', $slug)
-                ->with('children')
+                ->visible()
+                ->with(['children' => fn ($query) => $query->visible()])
                 ->firstOrFail(),
         );
     }
@@ -46,7 +52,7 @@ final class CategoryController extends Controller
     public function meta(string $slug): CategoryMetaResource
     {
         return new CategoryMetaResource(
-            Category::query()->where('slug', $slug)->firstOrFail(),
+            Category::query()->where('slug', $slug)->visible()->firstOrFail(),
         );
     }
 }

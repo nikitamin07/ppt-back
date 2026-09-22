@@ -9,8 +9,8 @@ use Closure;
 use App\Services\ImageOptimizer;
 use Illuminate\Http\UploadedFile;
 use Filament\Forms\Components\FileUpload;
+use Filament\Forms\Components\RichEditor;
 use Filament\Forms\Components\Select;
-use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\TextInput;
 use Filament\Forms\Components\Toggle;
 use Filament\Schemas\Components\Utilities\Get;
@@ -51,9 +51,8 @@ class ProductForm
                     ->relationship('manufacturer', 'name')
                     ->searchable()
                     ->preload(),
-                Textarea::make('description')
+                RichEditor::make('description')
                     ->label('Описание')
-                    ->rows(12)
                     ->columnSpanFull(),
                 self::metaDescriptionField(),
                 // Режим цены: либо обычная цена (+скидка), либо объёмные тарифы (low и medium обязательны)

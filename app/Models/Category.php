@@ -36,6 +36,30 @@ final class Category extends Model
             : (bool) ($this->parent?->show_calculator ?? true);
     }
 
+    /** Подкатегория видна, если есть хоть один активный товар; корень — если видна хоть одна подкатегория. */
+    public function isVisibleOnSite(): bool
+    {
+        return $this->parent_id === null
+            ? $this->children()->whereHas('products', fn (Builder $q) => $q->active())->exists()
+            : $this->products()->active()->exists();
+    }
+
+    /** То же правило видимости, что и isVisibleOnSite(), но для выборки списком — GET /categories и /categories/{slug}. */
+    public function scopeVisible(Builder $query): Builder
+    {
+        return $query->where(
+            fn (Builder $q) => $q
+                ->where(
+                    fn (Builder $sub) => $sub->whereNotNull('parent_id')
+                        ->whereHas('products', fn (Builder $p) => $p->active()),
+                )
+                ->orWhere(
+                    fn (Builder $sub) => $sub->whereNull('parent_id')
+                        ->whereHas('children', fn (Builder $c) => $c->whereHas('products', fn (Builder $p) => $p->active())),
+                ),
+        );
+    }
+
     protected static function booted(): void
     {
         // Новая категория встаёт в конец списка, а не в начало (position по умолчанию 0)

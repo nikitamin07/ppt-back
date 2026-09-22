@@ -6,6 +6,7 @@ use App\Filament\Resources\Concerns\SlugFields;
 use App\Models\Category;
 use Filament\Forms\Components\Textarea;
 use Filament\Forms\Components\Toggle;
+use Filament\Schemas\Components\Callout;
 use Filament\Schemas\Schema;
 
 class CategoryForm
@@ -16,6 +17,10 @@ class CategoryForm
     {
         return $schema
             ->components([
+                Callout::make('Категория не показывается на сайте, т.к. у нее нет активных товаров')
+                    ->warning()
+                    ->visible(fn (?Category $record): bool => $record !== null && ! $record->isVisibleOnSite())
+                    ->columnSpanFull(),
                 self::titleField('name', 'Название'),
                 self::slugField(),
                 Textarea::make('description')
