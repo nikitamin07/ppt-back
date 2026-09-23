@@ -11,7 +11,7 @@ use App\Http\Controllers\Api\SiteVisitController;
 use App\Http\Controllers\Api\TagController;
 use Illuminate\Support\Facades\Route;
 
-Route::middleware('throttle:60,1')->group(function (): void {
+Route::middleware('throttle:site-api')->group(function (): void {
     Route::get('/categories', [CategoryController::class, 'index']);
     Route::get('/categories/count', [CategoryController::class, 'count']);
     Route::get('/categories/{slug}', [CategoryController::class, 'show']);

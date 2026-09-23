@@ -40,4 +40,8 @@ return [
         'chats' => env('TELEGRAM_CHATS'),
     ],
 
+    'internal_api' => [
+        'token' => env('INTERNAL_API_TOKEN'),
+    ],
+
 ];
